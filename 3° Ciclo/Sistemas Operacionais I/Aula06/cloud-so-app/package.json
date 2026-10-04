@@ -1,0 +1,23 @@
+{
+  "name": "cloud-so-app",
+  "version": "1.0.0",
+  "description": "Painel web de informações do sistema operacional com Node.js e Express.js.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "express",
+    "nodejs",
+    "sistemas-operacionais",
+    "render"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
