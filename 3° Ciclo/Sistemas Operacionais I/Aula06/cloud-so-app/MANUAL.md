@@ -153,6 +153,16 @@ No navegador, acesse a URL pública e confirme que o painel carrega. O primeiro 
 
 Os campos usados no `render.yaml` (`runtime: node`, `buildCommand`, `startCommand` e `healthCheckPath`) seguem a referência oficial de Blueprints e de health checks do Render: [Blueprint YAML Reference](https://render.com/docs/blueprint-spec) e [Health Checks](https://render.com/docs/health-checks).
 
+### 6.4 Resultado efetivo do deploy
+
+O serviço foi publicado com sucesso no Render em:
+
+```text
+https://cloud-so-app-9yug.onrender.com
+```
+
+O endpoint `/healthz` retornou HTTP `200` e a página principal carregou no navegador. O deploy instalou 68 pacotes, encontrou 0 vulnerabilidades e terminou com a mensagem `Your service is live`.
+
 ## 7. Conceitos de Sistemas Operacionais observados
 
 ### Processos
@@ -192,6 +202,8 @@ O Render fornece o modelo PaaS: o aluno entrega código e comandos de build/star
 | Escala | Limitada ao computador local | Pode ser alterada pela configuração do serviço/plano |
 
 Os números não devem ser comparados como se medissem a mesma máquina. O significado técnico é semelhante, mas a origem dos recursos é diferente.
+
+Durante a validação desta entrega, uma amostra local apresentou Windows (`win32`), arquitetura `x64`, 12 CPUs, aproximadamente 15,9 GB de memória total e Node.js v24.19.0. A amostra publicada apresentou Linux, arquitetura `x64`, 8 CPUs, aproximadamente 30,6 GB de memória total, 16,9 GB livres e Node.js v26.10.0. Esses valores podem mudar entre acessos, especialmente a memória livre, a carga e o uptime do processo.
 
 ## 9. Conclusões
 
