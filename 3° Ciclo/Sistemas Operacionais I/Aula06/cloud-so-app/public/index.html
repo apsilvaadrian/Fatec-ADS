@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Painel de observação do sistema operacional usando Node.js e Express.js." />
+    <title>cloud-so-app | Monitor do sistema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="cloud-so-app início">
+          <span class="brand-mark" aria-hidden="true">☁</span>
+          <span>cloud-so-app</span>
+        </a>
+        <span class="status-pill"><span class="status-dot"></span> coleta em tempo real</span>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div>
+            <p class="eyebrow">NODE.JS · EXPRESS.JS · SISTEMAS OPERACIONAIS</p>
+            <h1>O sistema por trás<br /><span>da aplicação.</span></h1>
+            <p class="hero-copy">Uma leitura objetiva dos recursos do sistema operacional hospedeiro, capturada pelo runtime Node.js.</p>
+          </div>
+          <div class="hero-orbit" aria-hidden="true">
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <div class="core">SO</div>
+          </div>
+        </section>
+
+        <section class="section-heading">
+          <div>
+            <p class="eyebrow">OBSERVABILIDADE</p>
+            <h2>Recursos detectados</h2>
+          </div>
+          <div class="last-update">Atualizado em <strong id="last-update">—</strong></div>
+        </section>
+
+        <section class="metrics-grid" aria-live="polite">
+          <article class="metric-card accent-cyan">
+            <div class="metric-icon">⌁</div>
+            <p class="metric-label">Nome do host</p>
+            <p class="metric-value metric-value-small" id="hostname">Carregando…</p>
+            <p class="metric-note">Identidade da máquina hospedeira</p>
+          </article>
+          <article class="metric-card accent-purple">
+            <div class="metric-icon">◈</div>
+            <p class="metric-label">Plataforma</p>
+            <p class="metric-value" id="platform">—</p>
+            <p class="metric-note" id="platform-name">Sistema operacional</p>
+          </article>
+          <article class="metric-card accent-orange">
+            <div class="metric-icon">◫</div>
+            <p class="metric-label">Arquitetura</p>
+            <p class="metric-value" id="architecture">—</p>
+            <p class="metric-note">Conjunto de instruções</p>
+          </article>
+          <article class="metric-card accent-green">
+            <div class="metric-icon">⊞</div>
+            <p class="metric-label">CPUs disponíveis</p>
+            <p class="metric-value" id="cpu-count">—</p>
+            <p class="metric-note" id="cpu-model">Processadores lógicos</p>
+          </article>
+          <article class="metric-card accent-pink">
+            <div class="metric-icon">▣</div>
+            <p class="metric-label">Memória total</p>
+            <p class="metric-value" id="total-memory">—</p>
+            <p class="metric-note">Capacidade reportada pelo SO</p>
+          </article>
+          <article class="metric-card accent-blue">
+            <div class="metric-icon">◌</div>
+            <p class="metric-label">Memória livre</p>
+            <p class="metric-value" id="free-memory">—</p>
+            <p class="metric-note" id="memory-percent">Disponível no momento</p>
+          </article>
+        </section>
+
+        <section class="details-grid">
+          <article class="detail-panel uptime-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">CONTINUIDADE</p>
+                <h2>Tempo de atividade</h2>
+              </div>
+              <span class="panel-symbol">◷</span>
+            </div>
+            <p class="uptime-value" id="uptime">—</p>
+            <p class="panel-note">Tempo desde a inicialização do sistema operacional hospedeiro.</p>
+            <div class="uptime-track"><span id="uptime-bar"></span></div>
+          </article>
+          <article class="detail-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">CONTEXTO DE EXECUÇÃO</p>
+                <h2>Runtime Node.js</h2>
+              </div>
+              <span class="panel-symbol">⌘</span>
+            </div>
+            <dl class="runtime-list">
+              <div><dt>Versão</dt><dd id="node-version">—</dd></div>
+              <div><dt>Uptime do processo</dt><dd id="process-uptime">—</dd></div>
+              <div><dt>Carga média (1 / 5 / 15 min)</dt><dd id="load-average">—</dd></div>
+            </dl>
+          </article>
+        </section>
+
+        <section class="concepts-section">
+          <div class="section-heading concepts-heading">
+            <div>
+              <p class="eyebrow">LEITURA ACADÊMICA</p>
+              <h2>Conceitos de Sistemas Operacionais</h2>
+            </div>
+          </div>
+          <div class="concepts-grid">
+            <article><span>01</span><h3>Processos</h3><p>O Node.js executa o servidor como um processo do SO; o uptime do processo mostra seu ciclo de vida.</p></article>
+            <article><span>02</span><h3>Memória</h3><p><code>os.totalmem()</code> e <code>os.freemem()</code> expõem a memória física observada pelo processo.</p></article>
+            <article><span>03</span><h3>CPU</h3><p><code>os.cpus()</code> indica os processadores lógicos que o ambiente disponibiliza à aplicação.</p></article>
+            <article><span>04</span><h3>Nuvem e virtualização</h3><p>Em um PaaS, os valores representam o contêiner ou VM alocados pelo provedor, não o computador do desenvolvedor.</p></article>
+          </div>
+        </section>
+      </main>
+
+      <footer><span>cloud-so-app</span><span>Projeto acadêmico · Observabilidade do SO</span></footer>
+    </div>
+  </body>
+</html>
