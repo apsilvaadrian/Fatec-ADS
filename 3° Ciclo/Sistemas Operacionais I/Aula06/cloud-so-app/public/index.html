@@ -95,6 +95,47 @@
           </article>
         </section>
 
+
+        <section class="task-section">
+          <div class="section-heading">
+            <div><p class="eyebrow">GERENCIADOR DE TAREFAS</p><h2>Processos em execução</h2></div>
+            <div class="task-controls">
+              <input id="process-search" type="search" placeholder="Buscar processo ou PID" aria-label="Buscar processo ou PID" />
+              <select id="process-sort" aria-label="Ordenar processos"><option value="cpu">Maior CPU</option><option value="memory">Maior memória</option></select>
+            </div>
+          </div>
+          <div class="process-panel detail-panel">
+            <div class="process-summary"><span><strong id="process-count">0</strong> processos detectados</span><span>Atualização automática · 5s</span></div>
+            <div class="table-wrap">
+              <table class="process-table">
+                <thead><tr><th>Processo</th><th>PID</th><th>CPU</th><th>Memória</th><th>Tempo</th></tr></thead>
+                <tbody id="process-table-body"><tr><td colspan="5" class="empty-state">Carregando processos…</td></tr></tbody>
+              </table>
+            </div>
+            <p class="panel-note">A lista é somente leitura e mostra os processos visíveis para o ambiente onde o Node.js está sendo executado.</p>
+          </div>
+        </section>
+
+        <section class="network-section">
+          <div class="section-heading">
+            <div><p class="eyebrow">GERENCIADOR DE REDES</p><h2>Interfaces e endereços</h2></div>
+          </div>
+          <div class="network-manager-grid">
+            <article class="detail-panel network-info-card">
+              <div class="panel-heading"><div><p class="eyebrow">INTERFACES</p><h2>Detalhes da conexão</h2></div><span class="panel-symbol">⌁</span></div>
+              <div class="network-manager-list" id="network-manager-list"></div>
+            </article>
+            <article class="detail-panel">
+              <div class="panel-heading"><div><p class="eyebrow">CONTEXTO</p><h2>Como interpretar</h2></div><span class="panel-symbol">◎</span></div>
+              <div class="network-facts">
+                <div><strong>IPv4 / IPv6</strong><span>Mostra a família do endereço detectado.</span></div>
+                <div><strong>MAC</strong><span>Identificador da interface de rede, quando exposto pelo ambiente.</span></div>
+                <div><strong>Loopback</strong><span>Interfaces internas também aparecem para facilitar a análise do SO.</span></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
         <section class="concepts-section">
           <div class="section-heading concepts-heading"><div><p class="eyebrow">LEITURA ACADÊMICA</p><h2>O que esses dados representam?</h2></div></div>
           <div class="concepts-grid">
