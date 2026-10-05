@@ -90,3 +90,37 @@ async function loadSystemInfo() {
 
 loadSystemInfo();
 setInterval(loadSystemInfo, 5000);
+
+const processState = { items: [] };
+const formatProcessMemory = (bytes) => formatBytes(bytes);
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+
+async function loadProcesses() {
+  try {
+    const response = await fetch('/api/processes', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Falha ao consultar processos');
+    const data = await response.json();
+    processState.items = data.processes || [];
+    renderProcesses();
+  } catch (error) {
+    const body = $('process-table-body');
+    if (body) body.innerHTML = '<tr><td colspan="5" class="empty-state">Não foi possível consultar os processos deste ambiente.</td></tr>';
+    console.error(error);
+  }
+}
+
+function renderProcesses() {
+  const body = $('process-table-body');
+  if (!body) return;
+  const query = ($('process-search')?.value || '').toLowerCase().trim();
+  const sort = $('process-sort')?.value || 'cpu';
+  const items = processState.items.filter((item) => !query || String(item.name).toLowerCase().includes(query) || String(item.pid).includes(query))
+    .sort((a, b) => sort === 'memory' ? (b.memory || 0) - (a.memory || 0) : (b.cpu || 0) - (a.cpu || 0));
+  setText('process-count', processState.items.length);
+  body.innerHTML = items.length ? items.map((item) => '<tr><td><strong>' + escapeHtml(item.name) + '</strong></td><td><code>' + item.pid + '</code></td><td><span class="usage-value">' + Number(item.cpu || 0).toFixed(1) + '%</span></td><td>' + formatProcessMemory(item.memory || 0) + '<small>' + (item.memoryPercent ? ' · ' + Number(item.memoryPercent).toFixed(1) + '%' : '') + '</small></td><td>' + escapeHtml(item.elapsed || '—') + '</td></tr>').join('') : '<tr><td colspan="5" class="empty-state">Nenhum processo encontrado.</td></tr>';
+}
+
+loadProcesses();
+setInterval(loadProcesses, 5000);
+$('process-search')?.addEventListener('input', renderProcesses);
+$('process-sort')?.addEventListener('change', renderProcesses);
