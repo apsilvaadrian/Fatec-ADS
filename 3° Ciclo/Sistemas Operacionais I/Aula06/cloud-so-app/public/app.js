@@ -26,6 +26,22 @@ const formatDate = (isoDate) => new Intl.DateTimeFormat('pt-BR', { dateStyle: 's
 const setText = (id, value) => { const element = $(id); if (element) element.textContent = value; };
 const setBar = (id, percent) => { const element = $(id); if (element) element.style.width = `${Math.min(100, Math.max(0, percent || 0))}%`; };
 
+function renderExtraPcInfo(info) {
+  setText('ram-total-extra', formatBytes(info.memoryInfo?.total));
+  setText('ram-used-extra', formatBytes(info.memoryInfo?.used));
+  setText('ram-free-extra', formatBytes(info.memoryInfo?.free));
+  setText('ram-percent-extra', info.memoryUsagePercent != null ? info.memoryUsagePercent.toFixed(1) + '%' : '—');
+  setText('extra-hostname', info.osInfo?.hostname || '—');
+  setText('extra-os-type', info.osInfo?.type || '—');
+  setText('extra-platform', info.osInfo?.platform || '—');
+  setText('extra-arch', info.osInfo?.arch || '—');
+  setText('extra-release', info.osInfo?.release || '—');
+  const cpuList = $('cpu-list');
+  if (cpuList) cpuList.innerHTML = (info.cpuInfo || []).map(cpu => '<div class="info-row"><strong>CPU ' + cpu.id + '</strong><span>' + escapeHtml(cpu.model) + '</span><code>' + (cpu.speed || 0) + ' MHz</code></div>').join('');
+  const diskList = $('disk-list-extra');
+  if (diskList) diskList.innerHTML = (info.disks || []).map(d => '<div class="info-row"><strong>' + escapeHtml(d.drive) + '</strong><span>' + formatBytes(d.used) + ' usados</span><code>' + formatBytes(d.total) + '</code></div>').join('') || '<p class="empty-state">Não disponível</p>';
+}
+
 async function loadSystemInfo() {
   try {
     const response = await fetch('/api/system', { cache: 'no-store' });
@@ -45,6 +61,7 @@ async function loadSystemInfo() {
     setText('cpu-model-detail', info.cpuModel);
     setText('cpu-speed', info.cpuSpeed ? `${info.cpuSpeed} MHz` : 'Não informado');
     setText('cpu-usage', `${info.cpuUsage.toFixed(1)}%`);
+    setText('nav-cpu', `${info.cpuUsage.toFixed(0)}%`);
     setBar('cpu-bar', info.cpuUsage);
 
     setText('total-memory', formatBytes(info.totalMemory));
@@ -53,6 +70,7 @@ async function loadSystemInfo() {
     setText('used-memory-detail', formatBytes(info.usedMemory));
     setText('memory-percent', `${info.memoryUsagePercent.toFixed(1)}% em uso`);
     setBar('memory-bar', info.memoryUsagePercent);
+    setText('nav-ram', `${info.memoryUsagePercent.toFixed(0)}%`);
 
     setText('disk-total', formatBytes(info.disk.total));
     setText('disk-used', formatBytes(info.disk.used));
@@ -94,6 +112,7 @@ async function loadSystemInfo() {
 
     const interfaces = info.network || [];
     setText('network-count', interfaces.length);
+    setText('nav-net', interfaces.length);
     renderNetworkManager(interfaces);
     const networkList = $('network-list');
     if (networkList) {
@@ -105,6 +124,7 @@ async function loadSystemInfo() {
     setText('last-update', formatDate(info.capturedAt));
     setText('connection-status', 'online');
     setText('sidebar-status', 'Online');
+    renderExtraPcInfo(info);
     window.latestSystemInfo = info;
   } catch (error) {
     setText('hostname', 'Indisponível');
@@ -177,33 +197,30 @@ themeToggle?.addEventListener('click', () => { const next = document.documentEle
 
 const sectionLinks = [...document.querySelectorAll('.sidebar .nav-link[href^="#"]')];
 const sections = sectionLinks.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
-let activeSectionId = sections[0]?.id || 'overview';
+const sectionById = new Map(sections.map(s => [s.id, s]));
+let manualActive = null;
+let navObserver;
 
-function updateActiveNav() {
-  if (!sections.length) return;
-  const targetY = window.scrollY + 150;
-  let current = sections[0];
-  let bestDistance = Infinity;
-  sections.forEach(section => {
-    const distance = Math.abs(section.getBoundingClientRect().top + window.scrollY - targetY);
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      current = section;
-    }
-  });
-  activeSectionId = current.id;
-  sectionLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + activeSectionId));
+function setActiveNav(id) {
+  if (!id) return;
+  manualActive = id;
+  sectionLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + id));
 }
 
-let navTick = false;
-window.addEventListener('scroll', () => {
-  if (navTick) return;
-  navTick = true;
-  requestAnimationFrame(() => { updateActiveNav(); navTick = false; });
-}, { passive: true });
-window.addEventListener('resize', updateActiveNav);
+function setupActiveNavigation() {
+  if (navObserver) navObserver.disconnect();
+  navObserver = new IntersectionObserver((entries) => {
+    const visible = entries.filter(e => e.isIntersecting).sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (visible.length) {
+      const best = visible.reduce((a,b) => Math.abs(a.boundingClientRect.top-150) < Math.abs(b.boundingClientRect.top-150) ? a : b);
+      setActiveNav(best.target.id);
+    }
+  }, { root:null, rootMargin:'-105px 0px -55% 0px', threshold:[0,0.1,0.25] });
+  sections.forEach(section => navObserver.observe(section));
+}
 sectionLinks.forEach(link => link.addEventListener('click', () => {
-  activeSectionId = link.getAttribute('href').slice(1);
-  sectionLinks.forEach(item => item.classList.toggle('active', item === link));
+  const id = link.getAttribute('href').slice(1);
+  setActiveNav(id);
+  setTimeout(() => { manualActive = null; }, 700);
 }));
-requestAnimationFrame(updateActiveNav);
+setupActiveNavigation();
