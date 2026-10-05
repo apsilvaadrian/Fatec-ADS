@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Painel de observação do sistema operacional usando Node.js e Express.js." />
-    <title>cloud-so-app | Monitor do sistema</title>
+    <meta name="description" content="Monitor web de informações do sistema operacional usando Node.js e Express.js." />
+    <title>cloud-so-app | Monitor do PC</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -14,120 +14,99 @@
   <body>
     <div class="page-shell">
       <header class="topbar">
-        <a class="brand" href="/" aria-label="cloud-so-app início">
-          <span class="brand-mark" aria-hidden="true">☁</span>
-          <span>cloud-so-app</span>
-        </a>
-        <span class="status-pill"><span class="status-dot"></span> coleta em tempo real</span>
+        <a class="brand" href="/" aria-label="cloud-so-app início"><span class="brand-mark">☁</span><span>cloud-so-app</span></a>
+        <span class="status-pill"><span class="status-dot" id="status-dot"></span><span id="connection-status">conectando</span></span>
       </header>
 
       <main>
         <section class="hero">
           <div>
             <p class="eyebrow">NODE.JS · EXPRESS.JS · SISTEMAS OPERACIONAIS</p>
-            <h1>O sistema por trás<br /><span>da aplicação.</span></h1>
-            <p class="hero-copy">Uma leitura objetiva dos recursos do sistema operacional hospedeiro, capturada pelo runtime Node.js.</p>
+            <h1>Seu computador,<br /><span>em detalhes.</span></h1>
+            <p class="hero-copy">Painel de observabilidade do sistema operacional hospedeiro, com informações de hardware, recursos, armazenamento, rede e runtime.</p>
           </div>
-          <div class="hero-orbit" aria-hidden="true">
-            <div class="orbit orbit-one"></div>
-            <div class="orbit orbit-two"></div>
-            <div class="core">SO</div>
-          </div>
+          <div class="hero-orbit" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="core">SO</div></div>
         </section>
 
         <section class="section-heading">
-          <div>
-            <p class="eyebrow">OBSERVABILIDADE</p>
-            <h2>Recursos detectados</h2>
-          </div>
+          <div><p class="eyebrow">VISÃO GERAL</p><h2>Recursos do computador</h2></div>
           <div class="last-update">Atualizado em <strong id="last-update">—</strong></div>
         </section>
 
         <section class="metrics-grid" aria-live="polite">
-          <article class="metric-card accent-cyan">
-            <div class="metric-icon">⌁</div>
-            <p class="metric-label">Nome do host</p>
-            <p class="metric-value metric-value-small" id="hostname">Carregando…</p>
-            <p class="metric-note">Identidade da máquina hospedeira</p>
+          <article class="metric-card accent-cyan"><div class="metric-icon">⌁</div><p class="metric-label">Nome do host</p><p class="metric-value metric-value-small" id="hostname">Carregando…</p><p class="metric-note">Identidade da máquina</p></article>
+          <article class="metric-card accent-purple"><div class="metric-icon">◈</div><p class="metric-label">Sistema operacional</p><p class="metric-value" id="platform">—</p><p class="metric-note" id="platform-name">Plataforma</p></article>
+          <article class="metric-card accent-orange"><div class="metric-icon">◫</div><p class="metric-label">Arquitetura</p><p class="metric-value" id="architecture">—</p><p class="metric-note">Conjunto de instruções</p></article>
+          <article class="metric-card accent-green"><div class="metric-icon">⊞</div><p class="metric-label">Uso da CPU</p><p class="metric-value" id="cpu-usage">—</p><div class="progress"><span id="cpu-bar"></span></div><p class="metric-note" id="cpu-model">Processadores lógicos</p></article>
+          <article class="metric-card accent-pink"><div class="metric-icon">▣</div><p class="metric-label">Memória RAM</p><p class="metric-value" id="used-memory">—</p><div class="progress"><span id="memory-bar"></span></div><p class="metric-note" id="memory-percent">—</p></article>
+          <article class="metric-card accent-blue"><div class="metric-icon">◌</div><p class="metric-label">Armazenamento</p><p class="metric-value" id="disk-used">—</p><div class="progress"><span id="disk-bar"></span></div><p class="metric-note" id="disk-percent">—</p></article>
+        </section>
+
+        <section class="details-grid">
+          <article class="detail-panel">
+            <div class="panel-heading"><div><p class="eyebrow">PROCESSADOR</p><h2>CPU detectada</h2></div><span class="panel-symbol">⚙</span></div>
+            <dl class="runtime-list">
+              <div><dt>Processadores lógicos</dt><dd id="cpu-count">—</dd></div>
+              <div><dt>Velocidade reportada</dt><dd id="cpu-speed">—</dd></div>
+              <div><dt>Modelo</dt><dd id="cpu-model-detail">—</dd></div>
+            </dl>
           </article>
-          <article class="metric-card accent-purple">
-            <div class="metric-icon">◈</div>
-            <p class="metric-label">Plataforma</p>
-            <p class="metric-value" id="platform">—</p>
-            <p class="metric-note" id="platform-name">Sistema operacional</p>
+          <article class="detail-panel">
+            <div class="panel-heading"><div><p class="eyebrow">MEMÓRIA</p><h2>RAM disponível</h2></div><span class="panel-symbol">▣</span></div>
+            <dl class="runtime-list">
+              <div><dt>Total</dt><dd id="total-memory">—</dd></div>
+              <div><dt>Em uso</dt><dd id="used-memory-detail">—</dd></div>
+              <div><dt>Livre</dt><dd id="free-memory">—</dd></div>
+            </dl>
           </article>
-          <article class="metric-card accent-orange">
-            <div class="metric-icon">◫</div>
-            <p class="metric-label">Arquitetura</p>
-            <p class="metric-value" id="architecture">—</p>
-            <p class="metric-note">Conjunto de instruções</p>
+          <article class="detail-panel">
+            <div class="panel-heading"><div><p class="eyebrow">ARMAZENAMENTO</p><h2>Disco principal</h2></div><span class="panel-symbol">◫</span></div>
+            <dl class="runtime-list">
+              <div><dt>Capacidade</dt><dd id="disk-total">—</dd></div>
+              <div><dt>Ocupado</dt><dd id="disk-used-detail">—</dd></div>
+              <div><dt>Livre</dt><dd id="disk-free">—</dd></div>
+            </dl>
           </article>
-          <article class="metric-card accent-green">
-            <div class="metric-icon">⊞</div>
-            <p class="metric-label">CPUs disponíveis</p>
-            <p class="metric-value" id="cpu-count">—</p>
-            <p class="metric-note" id="cpu-model">Processadores lógicos</p>
-          </article>
-          <article class="metric-card accent-pink">
-            <div class="metric-icon">▣</div>
-            <p class="metric-label">Memória total</p>
-            <p class="metric-value" id="total-memory">—</p>
-            <p class="metric-note">Capacidade reportada pelo SO</p>
-          </article>
-          <article class="metric-card accent-blue">
-            <div class="metric-icon">◌</div>
-            <p class="metric-label">Memória livre</p>
-            <p class="metric-value" id="free-memory">—</p>
-            <p class="metric-note" id="memory-percent">Disponível no momento</p>
+          <article class="detail-panel">
+            <div class="panel-heading"><div><p class="eyebrow">SISTEMA</p><h2>Identificação</h2></div><span class="panel-symbol">◉</span></div>
+            <dl class="runtime-list">
+              <div><dt>Versão do SO</dt><dd id="os-release">—</dd></div>
+              <div><dt>Build / kernel</dt><dd id="os-version">—</dd></div>
+              <div><dt>Uptime</dt><dd id="uptime">—</dd></div>
+            </dl>
           </article>
         </section>
 
         <section class="details-grid">
-          <article class="detail-panel uptime-panel">
-            <div class="panel-heading">
-              <div>
-                <p class="eyebrow">CONTINUIDADE</p>
-                <h2>Tempo de atividade</h2>
-              </div>
-              <span class="panel-symbol">◷</span>
-            </div>
-            <p class="uptime-value" id="uptime">—</p>
-            <p class="panel-note">Tempo desde a inicialização do sistema operacional hospedeiro.</p>
-            <div class="uptime-track"><span id="uptime-bar"></span></div>
+          <article class="detail-panel">
+            <div class="panel-heading"><div><p class="eyebrow">REDE</p><h2>Interfaces detectadas</h2></div><span class="panel-symbol">⌁</span></div>
+            <p class="network-count"><strong id="network-count">0</strong> interface(s) externa(s)</p>
+            <div class="network-list" id="network-list"></div>
           </article>
           <article class="detail-panel">
-            <div class="panel-heading">
-              <div>
-                <p class="eyebrow">CONTEXTO DE EXECUÇÃO</p>
-                <h2>Runtime Node.js</h2>
-              </div>
-              <span class="panel-symbol">⌘</span>
-            </div>
+            <div class="panel-heading"><div><p class="eyebrow">RUNTIME</p><h2>Processo Node.js</h2></div><span class="panel-symbol">⌘</span></div>
             <dl class="runtime-list">
-              <div><dt>Versão</dt><dd id="node-version">—</dd></div>
+              <div><dt>Versão Node.js</dt><dd id="node-version">—</dd></div>
+              <div><dt>PID</dt><dd id="process-pid">—</dd></div>
               <div><dt>Uptime do processo</dt><dd id="process-uptime">—</dd></div>
-              <div><dt>Carga média (1 / 5 / 15 min)</dt><dd id="load-average">—</dd></div>
+              <div><dt>Memória RSS</dt><dd id="rss-memory">—</dd></div>
+              <div><dt>Heap usado</dt><dd id="heap-used">—</dd></div>
             </dl>
           </article>
         </section>
 
         <section class="concepts-section">
-          <div class="section-heading concepts-heading">
-            <div>
-              <p class="eyebrow">LEITURA ACADÊMICA</p>
-              <h2>Conceitos de Sistemas Operacionais</h2>
-            </div>
-          </div>
+          <div class="section-heading concepts-heading"><div><p class="eyebrow">LEITURA ACADÊMICA</p><h2>O que esses dados representam?</h2></div></div>
           <div class="concepts-grid">
-            <article><span>01</span><h3>Processos</h3><p>O Node.js executa o servidor como um processo do SO; o uptime do processo mostra seu ciclo de vida.</p></article>
-            <article><span>02</span><h3>Memória</h3><p><code>os.totalmem()</code> e <code>os.freemem()</code> expõem a memória física observada pelo processo.</p></article>
-            <article><span>03</span><h3>CPU</h3><p><code>os.cpus()</code> indica os processadores lógicos que o ambiente disponibiliza à aplicação.</p></article>
-            <article><span>04</span><h3>Nuvem e virtualização</h3><p>Em um PaaS, os valores representam o contêiner ou VM alocados pelo provedor, não o computador do desenvolvedor.</p></article>
+            <article><span>01</span><h3>Processos</h3><p>O Node.js é executado como um processo do SO. PID e uptime permitem observar seu ciclo de vida.</p></article>
+            <article><span>02</span><h3>Memória</h3><p>Total, livre e utilizada mostram como um recurso compartilhado do sistema varia durante a execução.</p></article>
+            <article><span>03</span><h3>CPU e disco</h3><p>A aplicação observa processadores lógicos, uso de CPU e capacidade de armazenamento disponíveis ao ambiente.</p></article>
+            <article><span>04</span><h3>Nuvem e virtualização</h3><p>No Render, os valores representam os recursos visíveis ao ambiente de execução, e não necessariamente o hardware físico.</p></article>
           </div>
         </section>
       </main>
 
-      <footer><span>cloud-so-app</span><span>Projeto acadêmico · Observabilidade do SO</span></footer>
+      <footer><span>cloud-so-app</span><span>Projeto acadêmico · Monitor do sistema operacional</span></footer>
     </div>
   </body>
 </html>
