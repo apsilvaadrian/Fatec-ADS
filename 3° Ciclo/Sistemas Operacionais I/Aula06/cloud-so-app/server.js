@@ -2,6 +2,7 @@ const express = require('express');
 const os = require('node:os');
 const fs = require('node:fs');
 const path = require('node:path');
+const { execFile } = require('node:child_process');
 
 const app = express();
 const port = Number.parseInt(process.env.PORT || '3000', 10);
@@ -13,20 +14,14 @@ let previousCpu = null;
 
 function getCpuUsage(cpus) {
   const idle = cpus.reduce((sum, cpu) => sum + cpu.times.idle, 0);
-  const total = cpus.reduce(
-    (sum, cpu) => sum + Object.values(cpu.times).reduce((a, b) => a + b, 0),
-    0
-  );
-
+  const total = cpus.reduce((sum, cpu) => sum + Object.values(cpu.times).reduce((a, b) => a + b, 0), 0);
   if (!previousCpu) {
     previousCpu = { idle, total };
     return 0;
   }
-
   const idleDelta = idle - previousCpu.idle;
   const totalDelta = total - previousCpu.total;
   previousCpu = { idle, total };
-
   return totalDelta > 0 ? Math.max(0, Math.min(100, (1 - idleDelta / totalDelta) * 100)) : 0;
 }
 
@@ -44,14 +39,54 @@ function getDiskInfo() {
 function getNetworkInfo() {
   const interfaces = os.networkInterfaces();
   return Object.entries(interfaces).flatMap(([name, addresses]) =>
-    (addresses || [])
-      .filter((address) => !address.internal)
-      .map((address) => ({
-        name,
-        address: address.address,
-        family: address.family
-      }))
+    (addresses || []).map((address) => ({
+      name,
+      address: address.address,
+      family: address.family,
+      mac: address.mac,
+      internal: address.internal
+    }))
   );
+}
+
+function getProcesses() {
+  return new Promise((resolve) => {
+    const linuxArgs = ['-eo', 'pid,comm,%cpu,%mem,rss,etime', '--sort=-%cpu'];
+    if (process.platform === 'win32') {
+      execFile('tasklist', ['/FO', 'CSV', '/NH'], { timeout: 5000 }, (error, stdout) => {
+        if (error) return resolve([]);
+        const processes = stdout.split(/\r?\n/).filter(Boolean).slice(0, 40).map((line) => {
+          const columns = line.match(/"([^"]*)"/g)?.map((value) => value.slice(1, -1)) || [];
+          return {
+            pid: Number(columns[1]) || 0,
+            name: columns[0] || 'Desconhecido',
+            cpu: 0,
+            memory: columns[4] ? Number(columns[4].replace(/[^0-9]/g, '')) * 1024 : 0,
+            elapsed: '—'
+          };
+        });
+        resolve(processes);
+      });
+      return;
+    }
+
+    execFile('ps', linuxArgs, { timeout: 5000 }, (error, stdout) => {
+      if (error) return resolve([]);
+      const processes = stdout.split(/\r?\n/).slice(1).filter(Boolean).map((line) => {
+        const match = line.trim().match(/^(\d+)\s+(.+?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+)\s+(\S+)$/);
+        if (!match) return null;
+        return {
+          pid: Number(match[1]),
+          name: match[2],
+          cpu: Number(match[3]),
+          memoryPercent: Number(match[4]),
+          memory: Number(match[5]) * 1024,
+          elapsed: match[6]
+        };
+      }).filter(Boolean);
+      resolve(processes.slice(0, 40));
+    });
+  });
 }
 
 function getSystemInfo() {
@@ -92,17 +127,15 @@ function getSystemInfo() {
   };
 }
 
-app.get('/api/system', (_request, response) => {
-  response.json(getSystemInfo());
+app.get('/api/system', (_request, response) => response.json(getSystemInfo()));
+
+app.get('/api/processes', async (_request, response) => {
+  response.json({ processes: await getProcesses(), capturedAt: new Date().toISOString() });
 });
 
-app.get('/healthz', (_request, response) => {
-  response.status(200).json({ status: 'ok' });
-});
+app.get('/healthz', (_request, response) => response.status(200).json({ status: 'ok' }));
 
-app.get('*', (_request, response) => {
-  response.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+app.get('*', (_request, response) => response.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 app.listen(port, '0.0.0.0', () => {
   console.log(`cloud-so-app disponível em http://localhost:${port}`);
