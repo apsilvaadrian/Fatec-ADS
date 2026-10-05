@@ -71,6 +71,7 @@ async function loadSystemInfo() {
 
     const interfaces = info.network || [];
     setText('network-count', interfaces.length);
+    renderNetworkManager(interfaces);
     const networkList = $('network-list');
     if (networkList) {
       networkList.innerHTML = interfaces.length
@@ -90,6 +91,14 @@ async function loadSystemInfo() {
 
 loadSystemInfo();
 setInterval(loadSystemInfo, 5000);
+
+function renderNetworkManager(interfaces) {
+  const container = $('network-manager-list');
+  if (!container) return;
+  container.innerHTML = interfaces.length ? interfaces.map((item) =>
+    '<div class="network-manager-item"><div><strong>' + escapeHtml(item.name) + '</strong><span>' + escapeHtml(item.family) + '</span></div><code>' + escapeHtml(item.address) + '</code><small>' + escapeHtml(item.mac || 'MAC não informado') + (item.internal ? ' · interna' : ' · externa') + '</small></div>'
+  ).join('') : '<p class="empty-state">Nenhuma interface encontrada.</p>';
+}
 
 const processState = { items: [] };
 const formatProcessMemory = (bytes) => formatBytes(bytes);
