@@ -5,10 +5,7 @@ const formatBytes = (bytes) => {
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let value = bytes;
   let unit = 0;
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024;
-    unit += 1;
-  }
+  while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit += 1; }
   return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
 };
 
@@ -25,28 +22,15 @@ const formatDuration = (seconds) => {
   return parts.join(' ');
 };
 
-const formatDate = (isoDate) => new Intl.DateTimeFormat('pt-BR', {
-  dateStyle: 'short',
-  timeStyle: 'medium'
-}).format(new Date(isoDate));
-
-const setText = (id, value) => {
-  const element = $(id);
-  if (element) element.textContent = value;
-};
-
-function setBar(id, percent) {
-  const element = $(id);
-  if (element) element.style.width = `${Math.min(100, Math.max(0, percent || 0))}%`;
-}
+const formatDate = (isoDate) => new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'medium' }).format(new Date(isoDate));
+const setText = (id, value) => { const element = $(id); if (element) element.textContent = value; };
+const setBar = (id, percent) => { const element = $(id); if (element) element.style.width = `${Math.min(100, Math.max(0, percent || 0))}%`; };
 
 async function loadSystemInfo() {
   try {
     const response = await fetch('/api/system', { cache: 'no-store' });
     if (!response.ok) throw new Error('Falha ao consultar a API');
-
     const info = await response.json();
-    const freePercent = info.totalMemory ? (info.freeMemory / info.totalMemory) * 100 : 0;
 
     setText('hostname', info.hostname);
     setText('platform', info.platform);
@@ -57,6 +41,7 @@ async function loadSystemInfo() {
 
     setText('cpu-count', info.cpuCount);
     setText('cpu-model', info.cpuModel);
+    setText('cpu-model-detail', info.cpuModel);
     setText('cpu-speed', info.cpuSpeed ? `${info.cpuSpeed} MHz` : 'Não informado');
     setText('cpu-usage', `${info.cpuUsage.toFixed(1)}%`);
     setBar('cpu-bar', info.cpuUsage);
@@ -64,11 +49,13 @@ async function loadSystemInfo() {
     setText('total-memory', formatBytes(info.totalMemory));
     setText('free-memory', formatBytes(info.freeMemory));
     setText('used-memory', formatBytes(info.usedMemory));
+    setText('used-memory-detail', formatBytes(info.usedMemory));
     setText('memory-percent', `${info.memoryUsagePercent.toFixed(1)}% em uso`);
     setBar('memory-bar', info.memoryUsagePercent);
 
     setText('disk-total', formatBytes(info.disk.total));
     setText('disk-used', formatBytes(info.disk.used));
+    setText('disk-used-detail', formatBytes(info.disk.used));
     setText('disk-free', formatBytes(info.disk.free));
     const diskPercent = info.disk.total ? (info.disk.used / info.disk.total) * 100 : 0;
     setText('disk-percent', info.disk.total ? `${diskPercent.toFixed(1)}% ocupado` : 'Não disponível');
@@ -81,7 +68,6 @@ async function loadSystemInfo() {
     setText('rss-memory', formatBytes(info.processMemory.rss));
     setText('heap-used', formatBytes(info.processMemory.heapUsed));
     setText('heap-total', formatBytes(info.processMemory.heapTotal));
-    setText('load-average', info.loadAverage.map((value) => value.toFixed(2)).join(' / '));
 
     const interfaces = info.network || [];
     setText('network-count', interfaces.length);
