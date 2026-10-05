@@ -146,3 +146,24 @@ $('export-csv')?.addEventListener('click', () => { const rows = [['Processo','PI
 $('refresh-now')?.addEventListener('click', () => { loadSystemInfo(); loadProcesses(); });
 $('mobile-menu')?.addEventListener('click', () => $('sidebar')?.classList.toggle('open'));
 document.querySelectorAll('.nav-link[href]').forEach(link => link.addEventListener('click', () => $('sidebar')?.classList.remove('open')));
+
+
+const themeToggle = $('theme-toggle');
+const savedTheme = localStorage.getItem('cloud-so-theme') || 'light';
+document.documentElement.dataset.theme = savedTheme;
+function updateThemeButton() { if (themeToggle) themeToggle.textContent = document.documentElement.dataset.theme === 'dark' ? '☀ Claro' : '☾ Escuro'; }
+updateThemeButton();
+themeToggle?.addEventListener('click', () => { const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = next; localStorage.setItem('cloud-so-theme', next); updateThemeButton(); });
+
+const sectionLinks = [...document.querySelectorAll('.sidebar .nav-link[href^="#"]')];
+const sections = sectionLinks.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+function updateActiveNav() {
+  const marker = window.scrollY + 130;
+  let current = sections[0];
+  sections.forEach(section => { if (section.offsetTop <= marker) current = section; });
+  sectionLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + current.id));
+}
+window.addEventListener('scroll', updateActiveNav, { passive: true });
+window.addEventListener('resize', updateActiveNav);
+updateActiveNav();
+sectionLinks.forEach(link => link.addEventListener('click', () => { sectionLinks.forEach(item => item.classList.remove('active')); link.classList.add('active'); }));
