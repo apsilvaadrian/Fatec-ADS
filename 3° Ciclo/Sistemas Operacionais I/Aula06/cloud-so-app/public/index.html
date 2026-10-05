@@ -9,12 +9,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
-    <script src="/app.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script><script src="/app.js" defer></script>
   </head>
   <body>
     <button class="mobile-menu" id="mobile-menu" aria-label="Abrir menu">☰</button>
     <div class="app-layout">
-      <aside class="sidebar" id="sidebar"><div class="sidebar-brand"><span class="brand-mark">☁</span><div><strong>cloud-so-app</strong><small>System Monitor</small></div></div><nav class="sidebar-nav" aria-label="Navegação principal"><p>MONITORAMENTO</p><a class="nav-link active" href="#overview">⌂ <span>Visão geral</span></a><a class="nav-link" href="#hardware">⚙ <span>Hardware</span><b class="nav-live" id="nav-cpu">—</b></a><a class="nav-link" href="#memory-storage">▣ <span>Memória e disco</span><b class="nav-live" id="nav-ram">—</b></a><a class="nav-link" href="#network">⌁ <span>Rede</span><b class="nav-live" id="nav-net">—</b></a><a class="nav-link" href="#runtime">⌘ <span>Runtime</span></a><a class="nav-link" href="#tasks">▤ <span>Processos</span><b class="nav-live" id="nav-proc">—</b></a><a class="nav-link" href="#pc-details">▤ <span>PC completo</span></a><a class="nav-link" href="#environment">▦ <span>Ambiente</span></a><p>PROJETO</p><a class="nav-link" href="#concepts">◎ <span>Conceitos</span></a><button class="nav-link nav-button" id="export-json">⇩ <span>Exportar JSON</span></button><button class="nav-link nav-button" id="export-csv">⇩ <span>Exportar CSV</span></button></nav><div class="sidebar-footer"><span class="status-dot"></span><div><strong id="sidebar-status">Online</strong><small>Atualização automática</small></div></div></aside><div class="content-shell"><div class="page-shell">
+      <aside class="sidebar" id="sidebar"><div class="sidebar-brand"><span class="brand-mark">☁</span><div><strong>cloud-so-app</strong><small>System Monitor</small></div></div><nav class="sidebar-nav" aria-label="Navegação principal"><p>MONITORAMENTO</p><a class="nav-link active" href="#overview">⌂ <span>Visão geral</span></a><a class="nav-link" href="#realtime">◉ <span>Tempo real</span></a><a class="nav-link" href="#hardware">⚙ <span>Hardware</span><b class="nav-live" id="nav-cpu">—</b></a><a class="nav-link" href="#memory-storage">▣ <span>Memória e disco</span><b class="nav-live" id="nav-ram">—</b></a><a class="nav-link" href="#network">⌁ <span>Rede</span><b class="nav-live" id="nav-net">—</b></a><a class="nav-link" href="#runtime">⌘ <span>Runtime</span></a><a class="nav-link" href="#tasks">▤ <span>Processos</span><b class="nav-live" id="nav-proc">—</b></a><a class="nav-link" href="#pc-details">▤ <span>PC completo</span></a><a class="nav-link" href="#environment">▦ <span>Ambiente</span></a><p>PROJETO</p><a class="nav-link" href="#concepts">◎ <span>Conceitos</span></a><button class="nav-link nav-button" id="export-json">⇩ <span>Exportar JSON</span></button><button class="nav-link nav-button" id="export-csv">⇩ <span>Exportar CSV</span></button></nav><div class="sidebar-footer"><span class="status-dot"></span><div><strong id="sidebar-status">Online</strong><small>Atualização automática</small></div></div></aside><div class="content-shell"><div class="page-shell">
       <header class="topbar" id="overview">
         <a class="brand" href="/" aria-label="cloud-so-app início"><span class="brand-mark">☁</span><span>cloud-so-app</span></a>
         <div class="top-actions"><button class="theme-button" id="theme-toggle" aria-label="Alternar tema">☾ Escuro</button><button class="refresh-button" id="refresh-now">↻ Atualizar</button><span class="status-pill"><span class="status-dot" id="status-dot"></span><span id="connection-status">conectando</span></span></div>
@@ -42,6 +42,33 @@
           <article class="metric-card accent-green"><div class="metric-icon">⊞</div><p class="metric-label">Uso da CPU</p><p class="metric-value" id="cpu-usage">—</p><div class="progress"><span id="cpu-bar"></span></div><p class="metric-note" id="cpu-model">Processadores lógicos</p></article>
           <article class="metric-card accent-pink"><div class="metric-icon">▣</div><p class="metric-label">Memória RAM</p><p class="metric-value" id="used-memory">—</p><div class="progress"><span id="memory-bar"></span></div><p class="metric-note" id="memory-percent">—</p></article>
           <article class="metric-card accent-blue"><div class="metric-icon">◌</div><p class="metric-label">Armazenamento</p><p class="metric-value" id="disk-used">—</p><div class="progress"><span id="disk-bar"></span></div><p class="metric-note" id="disk-percent">—</p></article>
+        </section>
+
+        <section class="realtime-section" id="realtime">
+          <div class="section-heading">
+            <div><p class="eyebrow">MONITORAMENTO EM TEMPO REAL</p><h2>Desempenho ao vivo</h2></div>
+            <div class="live-indicator"><span class="pulse-dot"></span><strong id="chart-status">ao vivo</strong><span>· últimos 60s</span></div>
+          </div>
+          <div class="charts-grid">
+            <article class="chart-card chart-card-wide">
+              <div class="chart-heading"><div><p class="eyebrow">PROCESSADOR</p><h3>Uso da CPU</h3></div><strong class="chart-current" id="chart-cpu-current">—</strong></div>
+              <div class="chart-wrap"><canvas id="cpu-chart"></canvas></div>
+            </article>
+            <article class="chart-card">
+              <div class="chart-heading"><div><p class="eyebrow">MEMÓRIA</p><h3>Uso da RAM</h3></div><strong class="chart-current" id="chart-ram-current">—</strong></div>
+              <div class="chart-wrap"><canvas id="ram-chart"></canvas></div>
+            </article>
+            <article class="chart-card">
+              <div class="chart-heading"><div><p class="eyebrow">ARMAZENAMENTO</p><h3>Disco utilizado</h3></div><strong class="chart-current" id="chart-disk-current">—</strong></div>
+              <div class="chart-wrap"><canvas id="disk-chart"></canvas></div>
+            </article>
+          </div>
+          <div class="realtime-footer">
+            <span><i class="legend-dot cpu-dot"></i>CPU</span>
+            <span><i class="legend-dot ram-dot"></i>RAM</span>
+            <span><i class="legend-dot disk-dot"></i>Disco</span>
+            <span class="chart-note">Amostras coletadas a cada 5 segundos</span>
+          </div>
         </section>
 
         <section class="details-grid">

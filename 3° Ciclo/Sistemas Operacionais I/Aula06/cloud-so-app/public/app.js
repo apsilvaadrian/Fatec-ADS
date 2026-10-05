@@ -126,6 +126,7 @@ async function loadSystemInfo() {
     setText('sidebar-status', 'Online');
     renderExtraPcInfo(info);
     window.latestSystemInfo = info;
+    pushRealtimeSample(info);
   } catch (error) {
     setText('hostname', 'Indisponível');
     setText('connection-status', 'offline');
@@ -248,3 +249,113 @@ sectionLinks.forEach(link => link.addEventListener('click', (event) => {
 window.addEventListener('scroll', updateActiveNavigation, { passive: true });
 window.addEventListener('resize', updateActiveNavigation);
 updateActiveNavigation();
+
+
+/* Monitoramento em tempo real */
+const chartHistory = { labels: [], cpu: [], ram: [], disk: [] };
+const maxChartPoints = 12;
+let cpuChart, ramChart, diskChart;
+
+function getChartTheme() {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  return {
+    text: dark ? '#94a3b8' : '#64748b',
+    grid: dark ? 'rgba(148,163,184,.10)' : 'rgba(100,116,139,.10)',
+    tooltip: dark ? '#0f172a' : '#ffffff'
+  };
+}
+
+function buildChart(canvasId, label, dataKey, fill) {
+  const canvas = $(canvasId);
+  if (!canvas || !window.Chart) return null;
+  const theme = getChartTheme();
+  return new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: chartHistory.labels,
+      datasets: [{
+        label,
+        data: chartHistory[dataKey],
+        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2563eb',
+        backgroundColor: fill,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        tension: .38,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 350 },
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          displayColors: false,
+          backgroundColor: theme.tooltip,
+          titleColor: getComputedStyle(document.documentElement).getPropertyValue('--ink').trim(),
+          bodyColor: theme.text,
+          borderColor: getComputedStyle(document.documentElement).getPropertyValue('--line').trim(),
+          borderWidth: 1,
+          padding: 10,
+          callbacks: { label: (ctx) => label + ': ' + Number(ctx.parsed.y).toFixed(1) + '%' }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: theme.text, maxTicksLimit: 6, font: { size: 10 } }
+        },
+        y: {
+          min: 0,
+          max: 100,
+          grid: { color: theme.grid },
+          ticks: { color: theme.text, callback: (value) => value + '%', font: { size: 10 }, maxTicksLimit: 5 }
+        }
+      }
+    }
+  });
+}
+
+function initRealtimeCharts() {
+  if (!window.Chart) return;
+  cpuChart = buildChart('cpu-chart', 'CPU', 'cpu', 'rgba(37,99,235,.10)');
+  ramChart = buildChart('ram-chart', 'RAM', 'ram', 'rgba(124,58,237,.10)');
+  diskChart = buildChart('disk-chart', 'Disco', 'disk', 'rgba(8,145,178,.10)');
+}
+
+function refreshChartTheme() {
+  [cpuChart, ramChart, diskChart].forEach((chart) => {
+    if (!chart) return;
+    const theme = getChartTheme();
+    chart.options.scales.x.ticks.color = theme.text;
+    chart.options.scales.y.ticks.color = theme.text;
+    chart.options.scales.x.grid.color = theme.grid;
+    chart.options.scales.y.grid.color = theme.grid;
+    chart.options.plugins.tooltip.backgroundColor = theme.tooltip;
+    chart.options.plugins.tooltip.titleColor = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+    chart.options.plugins.tooltip.bodyColor = theme.text;
+    chart.options.plugins.tooltip.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--line').trim();
+    chart.update('none');
+  });
+}
+
+function pushRealtimeSample(info) {
+  const diskPercent = info.disk?.total ? (info.disk.used / info.disk.total) * 100 : 0;
+  const time = new Date(info.capturedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  chartHistory.labels.push(time);
+  chartHistory.cpu.push(Number(info.cpuUsage || 0));
+  chartHistory.ram.push(Number(info.memoryUsagePercent || 0));
+  chartHistory.disk.push(Number(diskPercent || 0));
+  while (chartHistory.labels.length > maxChartPoints) {
+    chartHistory.labels.shift(); chartHistory.cpu.shift(); chartHistory.ram.shift(); chartHistory.disk.shift();
+  }
+  setText('chart-cpu-current', Number(info.cpuUsage || 0).toFixed(1) + '%');
+  setText('chart-ram-current', Number(info.memoryUsagePercent || 0).toFixed(1) + '%');
+  setText('chart-disk-current', Number(diskPercent || 0).toFixed(1) + '%');
+  [cpuChart, ramChart, diskChart].forEach((chart) => chart?.update('none'));
+}
+
+setTimeout(initRealtimeCharts, 0);
