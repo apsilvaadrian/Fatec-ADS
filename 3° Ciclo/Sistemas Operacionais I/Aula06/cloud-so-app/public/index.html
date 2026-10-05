@@ -12,10 +12,12 @@
     <script src="/app.js" defer></script>
   </head>
   <body>
-    <div class="page-shell">
-      <header class="topbar">
+    <button class="mobile-menu" id="mobile-menu" aria-label="Abrir menu">☰</button>
+    <div class="app-layout">
+      <aside class="sidebar" id="sidebar"><div class="sidebar-brand"><span class="brand-mark">☁</span><div><strong>cloud-so-app</strong><small>System Monitor</small></div></div><nav class="sidebar-nav" aria-label="Navegação principal"><p>MONITORAMENTO</p><a class="nav-link active" href="#overview">⌂ <span>Visão geral</span></a><a class="nav-link" href="#hardware">⚙ <span>Hardware</span></a><a class="nav-link" href="#memory-storage">▣ <span>Memória e disco</span></a><a class="nav-link" href="#network">⌁ <span>Rede</span></a><a class="nav-link" href="#tasks">▤ <span>Processos</span></a><a class="nav-link" href="#runtime">⌘ <span>Runtime</span></a><p>PROJETO</p><a class="nav-link" href="#concepts">◎ <span>Conceitos</span></a><button class="nav-link nav-button" id="export-json">⇩ <span>Exportar JSON</span></button><button class="nav-link nav-button" id="export-csv">⇩ <span>Exportar CSV</span></button></nav><div class="sidebar-footer"><span class="status-dot"></span><div><strong id="sidebar-status">Online</strong><small>Atualização automática</small></div></div></aside><div class="content-shell"><div class="page-shell">
+      <header class="topbar" id="overview">
         <a class="brand" href="/" aria-label="cloud-so-app início"><span class="brand-mark">☁</span><span>cloud-so-app</span></a>
-        <span class="status-pill"><span class="status-dot" id="status-dot"></span><span id="connection-status">conectando</span></span>
+        <div class="top-actions"><button class="refresh-button" id="refresh-now">↻ Atualizar</button><span class="status-pill"><span class="status-dot" id="status-dot"></span><span id="connection-status">conectando</span></span></div>
       </header>
 
       <main>
@@ -43,7 +45,7 @@
         </section>
 
         <section class="details-grid">
-          <article class="detail-panel">
+          <article class="detail-panel" id="hardware">
             <div class="panel-heading"><div><p class="eyebrow">PROCESSADOR</p><h2>CPU detectada</h2></div><span class="panel-symbol">⚙</span></div>
             <dl class="runtime-list">
               <div><dt>Processadores lógicos</dt><dd id="cpu-count">—</dd></div>
@@ -51,7 +53,7 @@
               <div><dt>Modelo</dt><dd id="cpu-model-detail">—</dd></div>
             </dl>
           </article>
-          <article class="detail-panel">
+          <article class="detail-panel" id="memory-storage">
             <div class="panel-heading"><div><p class="eyebrow">MEMÓRIA</p><h2>RAM disponível</h2></div><span class="panel-symbol">▣</span></div>
             <dl class="runtime-list">
               <div><dt>Total</dt><dd id="total-memory">—</dd></div>
@@ -72,31 +74,31 @@
             <dl class="runtime-list">
               <div><dt>Versão do SO</dt><dd id="os-release">—</dd></div>
               <div><dt>Build / kernel</dt><dd id="os-version">—</dd></div>
-              <div><dt>Uptime</dt><dd id="uptime">—</dd></div>
+              <div><dt>Uptime</dt><dd id="uptime">—</dd></div><div><dt>Load average</dt><dd id="load-average">—</dd></div><div><dt>Plataforma</dt><dd id="platform-detail">—</dd></div>
             </dl>
           </article>
         </section>
 
         <section class="details-grid">
-          <article class="detail-panel">
+          <article class="detail-panel" id="network">
             <div class="panel-heading"><div><p class="eyebrow">REDE</p><h2>Interfaces detectadas</h2></div><span class="panel-symbol">⌁</span></div>
             <p class="network-count"><strong id="network-count">0</strong> interface(s) externa(s)</p>
             <div class="network-list" id="network-list"></div>
           </article>
-          <article class="detail-panel">
+          <article class="detail-panel" id="runtime">
             <div class="panel-heading"><div><p class="eyebrow">RUNTIME</p><h2>Processo Node.js</h2></div><span class="panel-symbol">⌘</span></div>
             <dl class="runtime-list">
               <div><dt>Versão Node.js</dt><dd id="node-version">—</dd></div>
               <div><dt>PID</dt><dd id="process-pid">—</dd></div>
               <div><dt>Uptime do processo</dt><dd id="process-uptime">—</dd></div>
               <div><dt>Memória RSS</dt><dd id="rss-memory">—</dd></div>
-              <div><dt>Heap usado</dt><dd id="heap-used">—</dd></div>
+              <div><dt>Heap usado</dt><dd id="heap-used">—</dd></div><div><dt>Heap total</dt><dd id="heap-total">—</dd></div>
             </dl>
           </article>
         </section>
 
 
-        <section class="task-section">
+        <section class="task-section" id="tasks">
           <div class="section-heading">
             <div><p class="eyebrow">GERENCIADOR DE TAREFAS</p><h2>Processos em execução</h2></div>
             <div class="task-controls">
@@ -136,7 +138,7 @@
           </div>
         </section>
 
-        <section class="concepts-section">
+        <section class="concepts-section" id="concepts">
           <div class="section-heading concepts-heading"><div><p class="eyebrow">LEITURA ACADÊMICA</p><h2>O que esses dados representam?</h2></div></div>
           <div class="concepts-grid">
             <article><span>01</span><h3>Processos</h3><p>O Node.js é executado como um processo do SO. PID e uptime permitem observar seu ciclo de vida.</p></article>
@@ -147,7 +149,8 @@
         </section>
       </main>
 
-      <footer><span>cloud-so-app</span><span>Projeto acadêmico · Monitor do sistema operacional</span></footer>
+      <footer><span>cloud-so-app</span><span>Projeto acadêmico · Monitor do sistema operacional</span><span>Exportação JSON · CSV</span></footer>
+      </div></div>
     </div>
   </body>
 </html>

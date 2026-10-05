@@ -38,6 +38,7 @@ async function loadSystemInfo() {
     setText('architecture', info.architecture);
     setText('os-release', info.release);
     setText('os-version', info.version || 'Não informado');
+    setText('platform-detail', `${info.platform} (${info.platformName})`);
 
     setText('cpu-count', info.cpuCount);
     setText('cpu-model', info.cpuModel);
@@ -62,11 +63,13 @@ async function loadSystemInfo() {
     setBar('disk-bar', diskPercent);
 
     setText('uptime', formatDuration(info.uptime));
+    setText('load-average', (info.loadAverage || []).map((value) => Number(value).toFixed(2)).join(' · ') || 'Não disponível');
     setText('node-version', info.nodeVersion);
     setText('process-pid', info.processPid);
     setText('process-uptime', formatDuration(info.processUptime));
     setText('rss-memory', formatBytes(info.processMemory.rss));
     setText('heap-used', formatBytes(info.processMemory.heapUsed));
+    setText('heap-total', formatBytes(info.processMemory.heapTotal));
     setText('heap-total', formatBytes(info.processMemory.heapTotal));
 
     const interfaces = info.network || [];
@@ -81,9 +84,12 @@ async function loadSystemInfo() {
 
     setText('last-update', formatDate(info.capturedAt));
     setText('connection-status', 'online');
+    setText('sidebar-status', 'Online');
+    window.latestSystemInfo = info;
   } catch (error) {
     setText('hostname', 'Indisponível');
     setText('connection-status', 'offline');
+    setText('sidebar-status', 'Offline');
     setText('last-update', 'erro de comunicação');
     console.error(error);
   }
@@ -133,3 +139,10 @@ loadProcesses();
 setInterval(loadProcesses, 5000);
 $('process-search')?.addEventListener('input', renderProcesses);
 $('process-sort')?.addEventListener('change', renderProcesses);
+function downloadFile(filename, content, type) { const blob = new Blob([content], { type }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = filename; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); }
+function buildExportData() { return { exportedAt: new Date().toISOString(), system: window.latestSystemInfo || null, processes: processState.items || [] }; }
+$('export-json')?.addEventListener('click', () => downloadFile('cloud-so-system-report.json', JSON.stringify(buildExportData(), null, 2), 'application/json;charset=utf-8'));
+$('export-csv')?.addEventListener('click', () => { const rows = [['Processo','PID','CPU (%)','Memória (bytes)','Memória (%)','Tempo']]; (processState.items || []).forEach((item) => rows.push([item.name,item.pid,item.cpu ?? 0,item.memory ?? 0,item.memoryPercent ?? '',item.elapsed ?? ''])); const csv = rows.map(row => row.map(value => '"' + String(value).replace(/"/g,'""') + '"').join(';')).join('\n'); downloadFile('cloud-so-processes.csv','\ufeff'+csv,'text/csv;charset=utf-8'); });
+$('refresh-now')?.addEventListener('click', () => { loadSystemInfo(); loadProcesses(); });
+$('mobile-menu')?.addEventListener('click', () => $('sidebar')?.classList.toggle('open'));
+document.querySelectorAll('.nav-link[href]').forEach(link => link.addEventListener('click', () => $('sidebar')?.classList.remove('open')));
