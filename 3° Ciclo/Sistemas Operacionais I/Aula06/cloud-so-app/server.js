@@ -25,6 +25,16 @@ function getCpuUsage(cpus) {
   return totalDelta > 0 ? Math.max(0, Math.min(100, (1 - idleDelta / totalDelta) * 100)) : 0;
 }
 
+function getDiskList() {
+  const root = path.parse(process.cwd()).root;
+  try {
+    const stats = fs.statfsSync(root);
+    const total = stats.blocks * stats.bsize;
+    const free = stats.bfree * stats.bsize;
+    return [{ drive: root, total, free, used: Math.max(0, total - free) }];
+  } catch { return []; }
+}
+
 function getDiskInfo() {
   try {
     const stats = fs.statfsSync(path.parse(process.cwd()).root);
@@ -151,9 +161,32 @@ function getSystemInfo() {
     usedMemory: Math.max(0, totalMemory - freeMemory),
     memoryUsagePercent: totalMemory ? ((totalMemory - freeMemory) / totalMemory) * 100 : 0,
     disk,
+    disks: getDiskList(),
+    cpuInfo: cpus.map((cpu, index) => ({
+      id: index + 1,
+      model: cpu.model,
+      speed: cpu.speed,
+      times: cpu.times
+    })),
+    memoryInfo: {
+      total: totalMemory,
+      free: freeMemory,
+      used: Math.max(0, totalMemory - freeMemory)
+    },
+    osInfo: {
+      hostname: os.hostname(),
+      type: os.type(),
+      release: os.release(),
+      version: os.version(),
+      platform: os.platform(),
+      arch: os.arch(),
+      machine: process.arch,
+      endianness: os.endianness()
+    },
     uptime: os.uptime(),
     loadAverage: os.loadavg(),
     network: getNetworkInfo(),
+    networkStats: { interfaceCount: Object.keys(os.networkInterfaces()).length },
     nodeVersion: process.version,
     processPid: process.pid,
     processUptime: process.uptime(),
