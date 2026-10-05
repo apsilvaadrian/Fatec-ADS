@@ -89,6 +89,45 @@ function getProcesses() {
   });
 }
 
+function getRuntimeInfo() {
+  const versions = process.versions || {};
+  return {
+    v8: versions.v8 || 'Não informado',
+    uv: versions.uv || 'Não informado',
+    openssl: versions.openssl || 'Não informado',
+    icu: versions.icu || 'Não informado',
+    argv: process.argv || []
+  };
+}
+
+function getEnvironmentInfo() {
+  let user = 'Não informado';
+  try { user = os.userInfo().username || user; } catch {}
+  return {
+    user,
+    home: os.homedir(),
+    cwd: process.cwd(),
+    tmp: os.tmpdir(),
+    shell: process.env.SHELL || process.env.ComSpec || 'Não informado',
+    endianness: os.endianness(),
+    eol: os.EOL,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    root: path.parse(process.cwd()).root,
+    nodeExec: process.execPath
+  };
+}
+
+function getResourceUsage() {
+  const usage = process.resourceUsage();
+  return {
+    userCPUTime: usage.userCPUTime,
+    systemCPUTime: usage.systemCPUTime,
+    maxRSS: usage.maxRSS,
+    fsRead: usage.fsRead,
+    fsWrite: usage.fsWrite
+  };
+}
+
 function getSystemInfo() {
   const cpus = os.cpus();
   const totalMemory = os.totalmem();
@@ -121,8 +160,13 @@ function getSystemInfo() {
     processMemory: {
       rss: processMemory.rss,
       heapUsed: processMemory.heapUsed,
-      heapTotal: processMemory.heapTotal
+      heapTotal: processMemory.heapTotal,
+      external: processMemory.external,
+      arrayBuffers: processMemory.arrayBuffers
     },
+    runtime: getRuntimeInfo(),
+    environment: getEnvironmentInfo(),
+    resourceUsage: getResourceUsage(),
     capturedAt: new Date().toISOString()
   };
 }
