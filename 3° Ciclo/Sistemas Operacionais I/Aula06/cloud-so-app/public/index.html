@@ -14,7 +14,7 @@
   <body>
     <button class="mobile-menu" id="mobile-menu" aria-label="Abrir menu">☰</button>
     <div class="app-layout">
-      <aside class="sidebar" id="sidebar"><div class="sidebar-brand"><span class="brand-mark">☁</span><div><strong>cloud-so-app</strong><small>System Monitor</small></div></div><nav class="sidebar-nav" aria-label="Navegação principal"><p>MONITORAMENTO</p><a class="nav-link active" href="#overview">⌂ <span>Visão geral</span></a><a class="nav-link" href="#hardware">⚙ <span>Hardware</span></a><a class="nav-link" href="#memory-storage">▣ <span>Memória e disco</span></a><a class="nav-link" href="#network">⌁ <span>Rede</span></a><a class="nav-link" href="#tasks">▤ <span>Processos</span></a><a class="nav-link" href="#runtime">⌘ <span>Runtime</span></a><p>PROJETO</p><a class="nav-link" href="#concepts">◎ <span>Conceitos</span></a><button class="nav-link nav-button" id="export-json">⇩ <span>Exportar JSON</span></button><button class="nav-link nav-button" id="export-csv">⇩ <span>Exportar CSV</span></button></nav><div class="sidebar-footer"><span class="status-dot"></span><div><strong id="sidebar-status">Online</strong><small>Atualização automática</small></div></div></aside><div class="content-shell"><div class="page-shell">
+      <aside class="sidebar" id="sidebar"><div class="sidebar-brand"><span class="brand-mark">☁</span><div><strong>cloud-so-app</strong><small>System Monitor</small></div></div><nav class="sidebar-nav" aria-label="Navegação principal"><p>MONITORAMENTO</p><a class="nav-link active" href="#overview">⌂ <span>Visão geral</span></a><a class="nav-link" href="#hardware">⚙ <span>Hardware</span></a><a class="nav-link" href="#memory-storage">▣ <span>Memória e disco</span></a><a class="nav-link" href="#network">⌁ <span>Rede</span></a><a class="nav-link" href="#tasks">▤ <span>Processos</span></a><a class="nav-link" href="#runtime">⌘ <span>Runtime</span></a><a class="nav-link" href="#environment">▦ <span>Ambiente</span></a><p>PROJETO</p><a class="nav-link" href="#concepts">◎ <span>Conceitos</span></a><button class="nav-link nav-button" id="export-json">⇩ <span>Exportar JSON</span></button><button class="nav-link nav-button" id="export-csv">⇩ <span>Exportar CSV</span></button></nav><div class="sidebar-footer"><span class="status-dot"></span><div><strong id="sidebar-status">Online</strong><small>Atualização automática</small></div></div></aside><div class="content-shell"><div class="page-shell">
       <header class="topbar" id="overview">
         <a class="brand" href="/" aria-label="cloud-so-app início"><span class="brand-mark">☁</span><span>cloud-so-app</span></a>
         <div class="top-actions"><button class="theme-button" id="theme-toggle" aria-label="Alternar tema">☾ Escuro</button><button class="refresh-button" id="refresh-now">↻ Atualizar</button><span class="status-pill"><span class="status-dot" id="status-dot"></span><span id="connection-status">conectando</span></span></div>
@@ -115,6 +115,54 @@
               </table>
             </div>
             <p class="panel-note">A lista é somente leitura e mostra os processos visíveis para o ambiente onde o Node.js está sendo executado.</p>
+          </div>
+        </section>
+
+        <section class="environment-section" id="environment">
+          <div class="section-heading">
+            <div><p class="eyebrow">AMBIENTE DE EXECUÇÃO</p><h2>Informações extras do sistema</h2></div>
+          </div>
+          <div class="environment-grid">
+            <article class="detail-panel">
+              <div class="panel-heading"><div><p class="eyebrow">USUÁRIO E CAMINHOS</p><h2>Contexto do processo</h2></div><span class="panel-symbol">⌂</span></div>
+              <dl class="runtime-list">
+                <div><dt>Usuário</dt><dd id="system-user">—</dd></div>
+                <div><dt>Diretório inicial</dt><dd id="home-dir">—</dd></div>
+                <div><dt>Diretório atual</dt><dd id="cwd">—</dd></div>
+                <div><dt>Diretório temporário</dt><dd id="tmp-dir">—</dd></div>
+                <div><dt>Shell</dt><dd id="shell">—</dd></div>
+              </dl>
+            </article>
+            <article class="detail-panel">
+              <div class="panel-heading"><div><p class="eyebrow">PLATAFORMA</p><h2>Detalhes do ambiente</h2></div><span class="panel-symbol">◫</span></div>
+              <dl class="runtime-list">
+                <div><dt>Tipo de CPU</dt><dd id="cpu-endianness">—</dd></div>
+                <div><dt>Separador de linha</dt><dd id="eol">—</dd></div>
+                <div><dt>Fuso horário</dt><dd id="timezone">—</dd></div>
+                <div><dt>Diretório raiz</dt><dd id="root-dir">—</dd></div>
+                <div><dt>Executável Node</dt><dd id="node-exec">—</dd></div>
+              </dl>
+            </article>
+            <article class="detail-panel">
+              <div class="panel-heading"><div><p class="eyebrow">V8 / LIBUV</p><h2>Motor JavaScript</h2></div><span class="panel-symbol">◆</span></div>
+              <dl class="runtime-list">
+                <div><dt>Versão V8</dt><dd id="v8-version">—</dd></div>
+                <div><dt>Versão libuv</dt><dd id="uv-version">—</dd></div>
+                <div><dt>OpenSSL</dt><dd id="openssl-version">—</dd></div>
+                <div><dt>ICU</dt><dd id="icu-version">—</dd></div>
+                <div><dt>Argumentos</dt><dd id="exec-argv">—</dd></div>
+              </dl>
+            </article>
+            <article class="detail-panel">
+              <div class="panel-heading"><div><p class="eyebrow">RECURSOS DO PROCESSO</p><h2>Uso acumulado</h2></div><span class="panel-symbol">◉</span></div>
+              <dl class="runtime-list">
+                <div><dt>CPU usuário</dt><dd id="user-cpu-time">—</dd></div>
+                <div><dt>CPU sistema</dt><dd id="system-cpu-time">—</dd></div>
+                <div><dt>RSS máximo</dt><dd id="max-rss">—</dd></div>
+                <div><dt>Leituras de FS</dt><dd id="fs-read">—</dd></div>
+                <div><dt>Escritas de FS</dt><dd id="fs-write">—</dd></div>
+              </dl>
+            </article>
           </div>
         </section>
 

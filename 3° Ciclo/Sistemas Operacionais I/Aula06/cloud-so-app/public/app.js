@@ -70,7 +70,27 @@ async function loadSystemInfo() {
     setText('rss-memory', formatBytes(info.processMemory.rss));
     setText('heap-used', formatBytes(info.processMemory.heapUsed));
     setText('heap-total', formatBytes(info.processMemory.heapTotal));
-    setText('heap-total', formatBytes(info.processMemory.heapTotal));
+
+    setText('system-user', info.environment?.user || 'Não informado');
+    setText('home-dir', info.environment?.home || 'Não informado');
+    setText('cwd', info.environment?.cwd || 'Não informado');
+    setText('tmp-dir', info.environment?.tmp || 'Não informado');
+    setText('shell', info.environment?.shell || 'Não informado');
+    setText('cpu-endianness', info.environment?.endianness || 'Não informado');
+    setText('eol', info.environment?.eol === '\r\n' ? 'CRLF (Windows)' : 'LF (Unix/Linux/macOS)');
+    setText('timezone', info.environment?.timezone || 'UTC');
+    setText('root-dir', info.environment?.root || 'Não informado');
+    setText('node-exec', info.environment?.nodeExec || 'Não informado');
+    setText('v8-version', info.runtime?.v8 || 'Não informado');
+    setText('uv-version', info.runtime?.uv || 'Não informado');
+    setText('openssl-version', info.runtime?.openssl || 'Não informado');
+    setText('icu-version', info.runtime?.icu || 'Não informado');
+    setText('exec-argv', (info.runtime?.argv || []).join(' ') || 'Não informado');
+    setText('user-cpu-time', info.resourceUsage ? `${(info.resourceUsage.userCPUTime / 1000).toFixed(1)} ms` : '—');
+    setText('system-cpu-time', info.resourceUsage ? `${(info.resourceUsage.systemCPUTime / 1000).toFixed(1)} ms` : '—');
+    setText('max-rss', info.resourceUsage ? formatBytes(info.resourceUsage.maxRSS * 1024) : '—');
+    setText('fs-read', info.resourceUsage?.fsRead ?? '—');
+    setText('fs-write', info.resourceUsage?.fsWrite ?? '—');
 
     const interfaces = info.network || [];
     setText('network-count', interfaces.length);
@@ -157,13 +177,33 @@ themeToggle?.addEventListener('click', () => { const next = document.documentEle
 
 const sectionLinks = [...document.querySelectorAll('.sidebar .nav-link[href^="#"]')];
 const sections = sectionLinks.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+let activeSectionId = sections[0]?.id || 'overview';
+
 function updateActiveNav() {
-  const marker = window.scrollY + 130;
+  if (!sections.length) return;
+  const targetY = window.scrollY + 150;
   let current = sections[0];
-  sections.forEach(section => { if (section.offsetTop <= marker) current = section; });
-  sectionLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + current.id));
+  let bestDistance = Infinity;
+  sections.forEach(section => {
+    const distance = Math.abs(section.getBoundingClientRect().top + window.scrollY - targetY);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      current = section;
+    }
+  });
+  activeSectionId = current.id;
+  sectionLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + activeSectionId));
 }
-window.addEventListener('scroll', updateActiveNav, { passive: true });
+
+let navTick = false;
+window.addEventListener('scroll', () => {
+  if (navTick) return;
+  navTick = true;
+  requestAnimationFrame(() => { updateActiveNav(); navTick = false; });
+}, { passive: true });
 window.addEventListener('resize', updateActiveNav);
-updateActiveNav();
-sectionLinks.forEach(link => link.addEventListener('click', () => { sectionLinks.forEach(item => item.classList.remove('active')); link.classList.add('active'); }));
+sectionLinks.forEach(link => link.addEventListener('click', () => {
+  activeSectionId = link.getAttribute('href').slice(1);
+  sectionLinks.forEach(item => item.classList.toggle('active', item === link));
+}));
+requestAnimationFrame(updateActiveNav);
