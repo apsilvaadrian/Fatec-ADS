@@ -197,30 +197,54 @@ themeToggle?.addEventListener('click', () => { const next = document.documentEle
 
 const sectionLinks = [...document.querySelectorAll('.sidebar .nav-link[href^="#"]')];
 const sections = sectionLinks.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
-const sectionById = new Map(sections.map(s => [s.id, s]));
-let manualActive = null;
-let navObserver;
+let navAutoScrolling = false;
+let navAutoScrollTimer;
 
 function setActiveNav(id) {
   if (!id) return;
-  manualActive = id;
   sectionLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + id));
 }
 
-function setupActiveNavigation() {
-  if (navObserver) navObserver.disconnect();
-  navObserver = new IntersectionObserver((entries) => {
-    const visible = entries.filter(e => e.isIntersecting).sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top);
-    if (visible.length) {
-      const best = visible.reduce((a,b) => Math.abs(a.boundingClientRect.top-150) < Math.abs(b.boundingClientRect.top-150) ? a : b);
-      setActiveNav(best.target.id);
-    }
-  }, { root:null, rootMargin:'-105px 0px -55% 0px', threshold:[0,0.1,0.25] });
-  sections.forEach(section => navObserver.observe(section));
-}
-sectionLinks.forEach(link => link.addEventListener('click', () => {
-  const id = link.getAttribute('href').slice(1);
+function scrollToSection(id) {
+  if (id === 'overview') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  const target = document.getElementById(id);
+  if (!target) return;
+
+  navAutoScrolling = true;
+  clearTimeout(navAutoScrollTimer);
   setActiveNav(id);
-  setTimeout(() => { manualActive = null; }, 700);
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  navAutoScrollTimer = setTimeout(() => {
+    navAutoScrolling = false;
+    setActiveNav(id);
+  }, 1200);
+}
+
+function updateActiveNavigation() {
+  if (navAutoScrolling) return;
+
+  const marker = window.scrollY + 130;
+  let current = sections[0];
+
+  sections.forEach(section => {
+    if (section.offsetTop <= marker) current = section;
+  });
+
+  setActiveNav(current?.id);
+}
+
+sectionLinks.forEach(link => link.addEventListener('click', (event) => {
+  event.preventDefault();
+  const id = link.getAttribute('href').slice(1);
+  scrollToSection(id);
+  $('sidebar')?.classList.remove('open');
 }));
-setupActiveNavigation();
+
+window.addEventListener('scroll', updateActiveNavigation, { passive: true });
+window.addEventListener('resize', updateActiveNavigation);
+updateActiveNavigation();
