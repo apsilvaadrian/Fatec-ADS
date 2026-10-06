@@ -76,15 +76,20 @@ html[data-theme="dark"] .sidebar-nav::-webkit-scrollbar-thumb{background:#334155
 
 /* Símbolos originais da navegação */
 .nav-symbol.nav-icon-cpu,.nav-symbol.nav-icon-ram{display:inline;position:static;flex:0 0 auto;width:auto;height:auto;color:inherit;font-size:1rem;line-height:1;font-family:"Segoe UI Symbol",Inter,system-ui,sans-serif}
-.nav-symbol.nav-icon-cpu::before{content:'⚙'}
-.nav-symbol.nav-icon-ram::before{content:'▣'}
-.nav-symbol.nav-icon-network{font-size:0;color:inherit}
-.nav-symbol.nav-icon-network::before{content:'🌐︎';font-size:1rem}
+.nav-symbol.nav-icon-cpu::before{content:'▣'}
+.nav-symbol.nav-icon-ram::before{content:'▦'}
+.nav-symbol.nav-icon-network{font-size:1rem;color:inherit}
+.nav-symbol.nav-icon-network::before{content:none}
 .nav-symbol.nav-icon-cpu::after,.nav-symbol.nav-icon-ram::after,.nav-symbol.nav-icon-network::after{content:none}
 
 .accent-teal{--accent:#0f766e}
 .accent-indigo{--accent:#4f46e5}
 .accent-amber{--accent:#d97706}
+.accent-ip{--accent:#0ea5e9}
+
+/* Mantém a linha de destaque com a mesma espessura em todos os cards */
+.metric-card::before{width:2.5px}
+@media(min-width:981px){.metrics-grid > .metric-card:nth-child(3n + 2)::before{width:2px}}
 
 /* Exibição estável e detalhada dos discos físicos */
 .storage-loading{margin:0;color:var(--soft);font-size:.75rem}
