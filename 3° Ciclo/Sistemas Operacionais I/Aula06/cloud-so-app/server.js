@@ -216,7 +216,23 @@ app.get('/api/hardware', async (_request, response) => {
       si.cpuTemperature()
     ]);
     const controllers = graphicsResult.status === 'fulfilled' ? (graphicsResult.value.controllers || []) : [];
-    const gpu = controllers.map((controller) => ({
+    const isVirtualController = (controller) => {
+      const identity = [
+        controller.model,
+        controller.vendor,
+        controller.subVendor,
+        controller.driverVersion,
+        controller.driver
+      ].filter(Boolean).join(' ').toLowerCase();
+
+      return /parsec|virtual|microsoft basic display|microsoft remote display|remote display|indirect display|rdp|vmware|virtualbox|hyper-v/.test(identity);
+    };
+
+    // O Windows pode listar adaptadores virtuais (ex.: Parsec) junto da GPU real.
+    // Priorizamos controladores físicos para não apresentar um adaptador de acesso remoto como GPU.
+    const physicalControllers = controllers.filter((controller) => !isVirtualController(controller));
+    const selectedControllers = physicalControllers.length ? physicalControllers : controllers.filter((controller) => !/parsec/i.test(String(controller.model || '')));
+    const gpu = selectedControllers.map((controller) => ({
       model: controller.model || 'GPU não identificada',
       vendor: controller.vendor || 'Não informado',
       vram: Number(controller.vram) || 0,
@@ -234,7 +250,7 @@ app.get('/api/hardware', async (_request, response) => {
       max: Number.isFinite(Number(temp.max)) && temp.max !== null && Number(temp.max) > 0 ? Number(temp.max) : null,
       cores: Array.isArray(temp.cores) ? temp.cores.filter(Number.isFinite) : []
     };
-    response.json({ gpu: gpu[0] || null, gpus: gpu, cpuTemperature, capturedAt: new Date().toISOString() });
+    response.json({ gpu: gpu[0] || null, gpus: gpu, ignoredVirtualGpus: controllers.filter(isVirtualController).map((controller) => controller.model || 'Adaptador virtual'), cpuTemperature, capturedAt: new Date().toISOString() });
   } catch (error) {
     response.json({ ...unavailable, error: 'Sensores indisponíveis neste ambiente.' });
   }
