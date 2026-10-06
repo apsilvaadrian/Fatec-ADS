@@ -194,7 +194,7 @@ const savedTheme = localStorage.getItem('cloud-so-theme') || 'light';
 document.documentElement.dataset.theme = savedTheme;
 function updateThemeButton() { if (themeToggle) themeToggle.textContent = document.documentElement.dataset.theme === 'dark' ? '☀ Claro' : '☾ Escuro'; }
 updateThemeButton();
-themeToggle?.addEventListener('click', () => { const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = next; localStorage.setItem('cloud-so-theme', next); updateThemeButton(); });
+themeToggle?.addEventListener('click', () => { const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = next; localStorage.setItem('cloud-so-theme', next); updateThemeButton(); refreshChartTheme(); refreshSensorChartTheme(); });
 
 const sectionLinks = [...document.querySelectorAll('.sidebar .nav-link[href^="#"]')];
 const sections = sectionLinks.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
@@ -359,3 +359,134 @@ function pushRealtimeSample(info) {
 }
 
 setTimeout(initRealtimeCharts, 0);
+
+
+/* Sensores de GPU e temperatura */
+const sensorHistory = { labels: [], gpu: [], cpuTemp: [], gpuTemp: [], vram: [] };
+const sensorCharts = {};
+const sensorMaxPoints = 12;
+const validNumber = (value) => typeof value === 'number' && Number.isFinite(value);
+const displayTemp = (value) => validNumber(value) ? value.toFixed(1) + ' °C' : 'Não disponível';
+const displayPercent = (value) => validNumber(value) ? value.toFixed(1) + '%' : 'Não disponível';
+
+function setTemperatureIndicator(barId, noteId, value) {
+  const bar = $(barId);
+  const note = $(noteId);
+  if (bar) {
+    bar.style.width = validNumber(value) ? Math.min(100, Math.max(0, value / 110 * 100)) + '%' : '0%';
+    bar.classList.toggle('temp-warning', validNumber(value) && value >= 70 && value < 85);
+    bar.classList.toggle('temp-high', validNumber(value) && value >= 85);
+    bar.classList.toggle('temp-unavailable', !validNumber(value));
+  }
+  if (note) {
+    note.textContent = !validNumber(value) ? 'Sensor não disponível' : value >= 85 ? 'Temperatura elevada · verifique a refrigeração' : value >= 70 ? 'Temperatura alta · acompanhe a evolução' : 'Leitura recebida do sensor';
+  }
+}
+
+async function loadHardwareSensors() {
+  try {
+    const response = await fetch('/api/hardware', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Falha ao consultar sensores');
+    const data = await response.json();
+    const gpu = data.gpu || null;
+    const cpuTemp = validNumber(data.cpuTemperature?.main) ? data.cpuTemperature.main
+      : validNumber(data.cpuTemperature?.max) ? data.cpuTemperature.max : null;
+    const gpuTemp = validNumber(gpu?.temperature) ? gpu.temperature : null;
+    const gpuUsage = validNumber(gpu?.utilization) ? gpu.utilization : null;
+    const vramTotal = validNumber(gpu?.memoryTotal) && gpu.memoryTotal > 0 ? gpu.memoryTotal * 1024 * 1024
+      : validNumber(gpu?.vram) && gpu.vram > 0 ? gpu.vram * 1024 * 1024 : 0;
+    const vramUsed = validNumber(gpu?.memoryUsed) && gpu.memoryUsed >= 0 ? gpu.memoryUsed * 1024 * 1024 : null;
+    const vramPercent = vramTotal > 0 && vramUsed !== null ? Math.min(100, vramUsed / vramTotal * 100) : null;
+
+    setText('gpu-model', gpu?.model || (data.gpus?.length ? 'GPU detectada' : 'GPU não identificada'));
+    setText('gpu-vendor', 'Fabricante: ' + (gpu?.vendor || 'Não informado'));
+    setText('gpu-vram', vramTotal > 0 ? formatBytes(vramTotal) : (validNumber(gpu?.vram) && gpu.vram > 0 ? gpu.vram + ' MB' : 'Não disponível'));
+    setText('gpu-driver', gpu?.driver || 'Não informado');
+    setText('gpu-clock', validNumber(gpu?.clockCore) ? gpu.clockCore + ' MHz' : 'Não disponível');
+    setText('gpu-memory-clock', validNumber(gpu?.clockMemory) ? gpu.clockMemory + ' MHz' : 'Não disponível');
+    setText('cpu-temp-current', displayTemp(cpuTemp));
+    setText('gpu-temp-current', displayTemp(gpuTemp));
+    setTemperatureIndicator('cpu-temp-bar', 'cpu-temp-note', cpuTemp);
+    setTemperatureIndicator('gpu-temp-bar', 'gpu-temp-note', gpuTemp);
+    setText('gpu-usage-current', displayPercent(gpuUsage));
+    setText('cpu-temp-chart-current', displayTemp(cpuTemp));
+    setText('gpu-temp-chart-current', displayTemp(gpuTemp));
+    setText('vram-usage-current', displayPercent(vramPercent));
+    setText('nav-gpu', gpuUsage !== null ? Math.round(gpuUsage) + '%' : '—');
+    setText('sensor-status', 'sensores consultados');
+
+    const time = new Date(data.capturedAt || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    sensorHistory.labels.push(time);
+    sensorHistory.gpu.push(gpuUsage);
+    sensorHistory.cpuTemp.push(cpuTemp);
+    sensorHistory.gpuTemp.push(gpuTemp);
+    sensorHistory.vram.push(vramPercent);
+    while (sensorHistory.labels.length > sensorMaxPoints) {
+      for (const key of Object.keys(sensorHistory)) sensorHistory[key].shift();
+    }
+    Object.values(sensorCharts).forEach((chart) => chart?.update('none'));
+  } catch (error) {
+    setText('sensor-status', 'sensores indisponíveis');
+    console.error(error);
+  }
+}
+
+function buildSensorChart(canvasId, label, dataKey, color, unit, maxValue) {
+  const canvas = $(canvasId);
+  if (!canvas || !window.Chart) return null;
+  const theme = getChartTheme();
+  return new Chart(canvas, {
+    type: 'line',
+    data: { labels: sensorHistory.labels, datasets: [{
+      label, data: sensorHistory[dataKey], borderColor: color,
+      backgroundColor: color + '18', borderWidth: 2, pointRadius: 0,
+      pointHoverRadius: 4, tension: .35, fill: true, spanGaps: false
+    }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 300 },
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          displayColors: false, backgroundColor: theme.tooltip,
+          titleColor: getComputedStyle(document.documentElement).getPropertyValue('--ink').trim(),
+          bodyColor: theme.text, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--line').trim(),
+          borderWidth: 1, callbacks: { label: (ctx) => ctx.parsed.y == null ? label + ': Não disponível' : label + ': ' + Number(ctx.parsed.y).toFixed(1) + unit }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: theme.text, maxTicksLimit: 6, font: { size: 10 } } },
+        y: { beginAtZero: true, ...(maxValue ? { max: maxValue } : {}), grid: { color: theme.grid }, ticks: { color: theme.text, callback: (value) => value + unit, maxTicksLimit: 5, font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function initSensorCharts() {
+  if (!window.Chart) return;
+  sensorCharts.gpu = buildSensorChart('gpu-usage-chart', 'Uso da GPU', 'gpu', '#8b5cf6', '%', 100);
+  sensorCharts.cpuTemp = buildSensorChart('cpu-temp-chart', 'Temperatura CPU', 'cpuTemp', '#ea580c', ' °C', 110);
+  sensorCharts.gpuTemp = buildSensorChart('gpu-temp-chart', 'Temperatura GPU', 'gpuTemp', '#dc2626', ' °C', 110);
+  sensorCharts.vram = buildSensorChart('vram-usage-chart', 'Uso da VRAM', 'vram', '#0891b2', '%', 100);
+  refreshSensorChartTheme();
+}
+
+function refreshSensorChartTheme() {
+  Object.values(sensorCharts).forEach((chart) => {
+    if (!chart) return;
+    const theme = getChartTheme();
+    chart.options.scales.x.ticks.color = theme.text;
+    chart.options.scales.y.ticks.color = theme.text;
+    chart.options.scales.x.grid.color = theme.grid;
+    chart.options.scales.y.grid.color = theme.grid;
+    chart.options.plugins.tooltip.backgroundColor = theme.tooltip;
+    chart.options.plugins.tooltip.titleColor = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+    chart.options.plugins.tooltip.bodyColor = theme.text;
+    chart.options.plugins.tooltip.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--line').trim();
+    chart.update('none');
+  });
+}
+
+setTimeout(initSensorCharts, 0);
+loadHardwareSensors();
+setInterval(loadHardwareSensors, 5000);

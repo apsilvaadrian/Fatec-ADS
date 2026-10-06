@@ -3,6 +3,7 @@ const os = require('node:os');
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFile } = require('node:child_process');
+const si = require('systeminformation');
 
 const app = express();
 const port = Number.parseInt(process.env.PORT || '3000', 10);
@@ -205,6 +206,39 @@ function getSystemInfo() {
 }
 
 app.get('/api/system', (_request, response) => response.json(getSystemInfo()));
+
+
+app.get('/api/hardware', async (_request, response) => {
+  const unavailable = { gpu: null, cpuTemperature: null, capturedAt: new Date().toISOString() };
+  try {
+    const [graphicsResult, cpuTempResult] = await Promise.allSettled([
+      si.graphics(),
+      si.cpuTemperature()
+    ]);
+    const controllers = graphicsResult.status === 'fulfilled' ? (graphicsResult.value.controllers || []) : [];
+    const gpu = controllers.map((controller) => ({
+      model: controller.model || 'GPU não identificada',
+      vendor: controller.vendor || 'Não informado',
+      vram: Number(controller.vram) || 0,
+      memoryTotal: Number(controller.memoryTotal) || 0,
+      memoryUsed: Number(controller.memoryUsed) || 0,
+      utilization: Number.isFinite(Number(controller.utilizationGpu)) && controller.utilizationGpu !== null && Number(controller.utilizationGpu) >= 0 ? Number(controller.utilizationGpu) : null,
+      temperature: Number.isFinite(Number(controller.temperatureGpu)) && controller.temperatureGpu !== null && Number(controller.temperatureGpu) > 0 ? Number(controller.temperatureGpu) : null,
+      clockCore: Number.isFinite(Number(controller.clockCore)) && controller.clockCore !== null ? Number(controller.clockCore) : null,
+      clockMemory: Number.isFinite(Number(controller.clockMemory)) && controller.clockMemory !== null ? Number(controller.clockMemory) : null,
+      driver: controller.driverVersion || controller.driver || 'Não informado'
+    }));
+    const temp = cpuTempResult.status === 'fulfilled' ? cpuTempResult.value : {};
+    const cpuTemperature = {
+      main: Number.isFinite(Number(temp.main)) && temp.main !== null && Number(temp.main) > 0 ? Number(temp.main) : null,
+      max: Number.isFinite(Number(temp.max)) && temp.max !== null && Number(temp.max) > 0 ? Number(temp.max) : null,
+      cores: Array.isArray(temp.cores) ? temp.cores.filter(Number.isFinite) : []
+    };
+    response.json({ gpu: gpu[0] || null, gpus: gpu, cpuTemperature, capturedAt: new Date().toISOString() });
+  } catch (error) {
+    response.json({ ...unavailable, error: 'Sensores indisponíveis neste ambiente.' });
+  }
+});
 
 app.get('/api/processes', async (_request, response) => {
   response.json({ processes: await getProcesses(), capturedAt: new Date().toISOString() });
