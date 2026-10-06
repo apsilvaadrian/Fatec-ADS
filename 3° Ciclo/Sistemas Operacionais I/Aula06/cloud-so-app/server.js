@@ -128,6 +128,195 @@ function getEnvironmentInfo() {
   };
 }
 
+function runPowerShellJson(script, timeout = 5000) {
+  if (process.platform !== 'win32') return Promise.resolve(null);
+
+  return new Promise((resolve) => {
+    execFile(
+      'powershell.exe',
+      ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script],
+      { timeout, maxBuffer: 1024 * 1024 },
+      (error, stdout) => {
+        if (error || !stdout?.trim()) return resolve(null);
+        try {
+          resolve(JSON.parse(stdout.trim()));
+        } catch {
+          resolve(null);
+        }
+      }
+    );
+  });
+}
+
+function asArray(value) {
+  if (value === null || value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function validSensorValue(value, min = 0, max = 150) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= min && number <= max ? number : null;
+}
+
+function parseMonitorNumber(value) {
+  if (typeof value === 'number') return value;
+  const match = String(value ?? '').replace(',', '.').match(/-?\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : null;
+}
+
+function flattenHardwareMonitorTree(node, parents = [], result = []) {
+  if (Array.isArray(node)) {
+    node.forEach((child) => flattenHardwareMonitorTree(child, parents, result));
+    return result;
+  }
+  if (!node || typeof node !== 'object') return result;
+
+  const name = node.Text || node.Name || node.name || '';
+  const sensorType = node.Type || node.SensorType || node.sensorType || '';
+  const value = parseMonitorNumber(node.Value ?? node.value);
+  if (sensorType && value !== null) {
+    result.push({
+      provider: 'LibreHardwareMonitor HTTP',
+      name: String(name),
+      sensorType: String(sensorType),
+      value,
+      identifier: node.SensorId || node.Identifier || node.identifier || '',
+      parent: parents.join(' '),
+      hardwareType: node.HardwareType || ''
+    });
+  }
+
+  if (Array.isArray(node.Children)) {
+    flattenHardwareMonitorTree(node.Children, name ? [...parents, name] : parents, result);
+  }
+  return result;
+}
+
+async function getLibreHardwareMonitorHttpSensors() {
+  if (typeof fetch !== 'function') return [];
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1500);
+  try {
+    const response = await fetch('http://127.0.0.1:8085/data.json', {
+      signal: controller.signal,
+      headers: { accept: 'application/json' }
+    });
+    if (!response.ok) return [];
+    return flattenHardwareMonitorTree(await response.json());
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function getWindowsMonitorSensors() {
+  if (process.platform !== 'win32') return { provider: null, sensors: [] };
+
+  // LibreHardwareMonitor e OpenHardwareMonitor são os únicos provedores
+  // conhecidos que expõem, de forma consistente, temperatura de CPU/GPU no Windows.
+  const script = [
+    '$ErrorActionPreference = "SilentlyContinue"',
+    '$items = @()',
+    'foreach ($namespace in @("root/LibreHardwareMonitor", "root/OpenHardwareMonitor")) {',
+    '  try {',
+    '    $provider = ($namespace -split "/")[-1]',
+    '    foreach ($sensor in (Get-CimInstance -Namespace $namespace -ClassName Sensor -ErrorAction Stop)) {',
+    '      $items += [pscustomobject]@{ provider = $provider; name = [string]$sensor.Name; sensorType = [string]$sensor.SensorType; value = [double]$sensor.Value; identifier = [string]$sensor.Identifier; parent = [string]$sensor.Parent; hardwareType = [string]$sensor.HardwareType }',
+    '    }',
+    '  } catch {}',
+    '}',
+    '$items | ConvertTo-Json -Compress -Depth 4'
+  ].join(';');
+
+  const [wmiResult, httpResult] = await Promise.all([
+    runPowerShellJson(script),
+    getLibreHardwareMonitorHttpSensors()
+  ]);
+  const httpSensors = asArray(httpResult);
+  const wmiSensors = asArray(wmiResult);
+  const sensors = httpSensors.length ? httpSensors : wmiSensors;
+  const provider = sensors[0]?.provider || null;
+  return { provider, sensors };
+}
+
+async function getWindowsGpuUsage() {
+  if (process.platform !== 'win32') return null;
+
+  // O contador nativo funciona mesmo quando o driver não fornece temperatura.
+  // O maior valor representa o engine mais ocupado da GPU naquele instante.
+  const script = [
+    '$ErrorActionPreference = "SilentlyContinue"',
+    '$samples = (Get-Counter "\\GPU Engine(*)\\Utilization Percentage" -ErrorAction SilentlyContinue).CounterSamples',
+    '$max = ($samples | Where-Object { $_.CookedValue -ge 0 } | Measure-Object -Property CookedValue -Maximum).Maximum',
+    'if ($null -ne $max) { [pscustomobject]@{ value = [double]$max } | ConvertTo-Json -Compress }'
+  ].join(';');
+
+  const result = await runPowerShellJson(script, 9000);
+  const value = validSensorValue(result?.value, 0, 1000);
+  return value === null ? null : Math.min(100, value);
+}
+
+const gpuUsageCache = { capturedAt: 0, value: null, pending: null };
+
+async function getCachedWindowsGpuUsage() {
+  const now = Date.now();
+  if (gpuUsageCache.capturedAt && now - gpuUsageCache.capturedAt < 8000) return gpuUsageCache.value;
+  if (gpuUsageCache.pending) return gpuUsageCache.pending;
+
+  gpuUsageCache.pending = getWindowsGpuUsage()
+    .then((value) => {
+      gpuUsageCache.value = value;
+      gpuUsageCache.capturedAt = Date.now();
+      return value;
+    })
+    .finally(() => {
+      gpuUsageCache.pending = null;
+    });
+  return gpuUsageCache.pending;
+}
+
+function sensorIdentity(sensor) {
+  return [sensor.name, sensor.parent, sensor.identifier, sensor.hardwareType]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
+function findMonitorTemperature(sensors, kind) {
+  const candidates = sensors.filter((sensor) => {
+    const type = String(sensor.sensorType || '').toLowerCase();
+    const identity = sensorIdentity(sensor);
+    const isTemperature = type === 'temperature' || type === 'temperature sensor';
+    const isGpu = /gpu|graphics|radeon|geforce|nvidia|arc|display/.test(identity);
+    const isCpu = /cpu|processor|package|tdie|tctl|core|ryzen|zen|apu/.test(identity);
+    return isTemperature && (kind === 'gpu' ? isGpu : isCpu) && validSensorValue(sensor.value, 1, 150) !== null;
+  });
+
+  if (!candidates.length) return { value: null, cores: [] };
+  const preferred = kind === 'gpu'
+    ? candidates.find((sensor) => /core|edge|junction|hot spot/i.test(String(sensor.name)))
+    : candidates.find((sensor) => /package|tdie|tctl|cpu/i.test(String(sensor.name)));
+  const selected = preferred || candidates[0];
+  return {
+    value: validSensorValue(selected.value, 1, 150),
+    cores: kind === 'cpu' ? candidates.map((sensor) => validSensorValue(sensor.value, 1, 150)).filter((value) => value !== null) : []
+  };
+}
+
+function findMonitorGpuUsage(sensors) {
+  const values = sensors
+    .filter((sensor) => {
+      const type = String(sensor.sensorType || '').toLowerCase();
+      const identity = sensorIdentity(sensor);
+      return (type === 'load' || type === 'utilization') && /gpu|graphics|radeon|geforce|nvidia|arc|display/.test(identity);
+    })
+    .map((sensor) => validSensorValue(sensor.value, 0, 100))
+    .filter((value) => value !== null);
+
+  return values.length ? Math.min(100, Math.max(...values)) : null;
+}
+
 function getResourceUsage() {
   const usage = process.resourceUsage();
   return {
@@ -209,13 +398,22 @@ app.get('/api/system', (_request, response) => response.json(getSystemInfo()));
 
 
 app.get('/api/hardware', async (_request, response) => {
-  const unavailable = { gpu: null, cpuTemperature: null, capturedAt: new Date().toISOString() };
+  const capturedAt = new Date().toISOString();
+  const unavailable = { gpu: null, cpuTemperature: null, sensorStatus: { available: false }, capturedAt };
   try {
-    const [graphicsResult, cpuTempResult] = await Promise.allSettled([
+    const [graphicsResult, cpuTempResult, monitorResult, gpuUsageResult] = await Promise.allSettled([
       si.graphics(),
-      si.cpuTemperature()
+      si.cpuTemperature(),
+      getWindowsMonitorSensors(),
+      getCachedWindowsGpuUsage()
     ]);
     const controllers = graphicsResult.status === 'fulfilled' ? (graphicsResult.value.controllers || []) : [];
+    const monitor = monitorResult.status === 'fulfilled' ? monitorResult.value : { provider: null, sensors: [] };
+    const monitorCpuTemperature = findMonitorTemperature(monitor.sensors, 'cpu');
+    const monitorGpuTemperature = findMonitorTemperature(monitor.sensors, 'gpu');
+    const monitorGpuUsage = findMonitorGpuUsage(monitor.sensors);
+    const nativeGpuUsage = gpuUsageResult.status === 'fulfilled' ? gpuUsageResult.value : null;
+    const windowsGpuUsage = monitorGpuUsage ?? nativeGpuUsage;
     const isVirtualController = (controller) => {
       const identity = [
         controller.model,
@@ -238,21 +436,61 @@ app.get('/api/hardware', async (_request, response) => {
       vram: Number(controller.vram) || 0,
       memoryTotal: Number(controller.memoryTotal) || 0,
       memoryUsed: Number(controller.memoryUsed) || 0,
-      utilization: Number.isFinite(Number(controller.utilizationGpu)) && controller.utilizationGpu !== null && Number(controller.utilizationGpu) >= 0 ? Number(controller.utilizationGpu) : null,
-      temperature: Number.isFinite(Number(controller.temperatureGpu)) && controller.temperatureGpu !== null && Number(controller.temperatureGpu) > 0 ? Number(controller.temperatureGpu) : null,
+      utilization: Number.isFinite(Number(controller.utilizationGpu)) && controller.utilizationGpu !== null && Number(controller.utilizationGpu) >= 0 ? Number(controller.utilizationGpu) : windowsGpuUsage,
+      temperature: Number.isFinite(Number(controller.temperatureGpu)) && controller.temperatureGpu !== null && Number(controller.temperatureGpu) > 0 ? Number(controller.temperatureGpu) : monitorGpuTemperature.value,
       clockCore: Number.isFinite(Number(controller.clockCore)) && controller.clockCore !== null ? Number(controller.clockCore) : null,
       clockMemory: Number.isFinite(Number(controller.clockMemory)) && controller.clockMemory !== null ? Number(controller.clockMemory) : null,
       driver: controller.driverVersion || controller.driver || 'Não informado'
     }));
     const temp = cpuTempResult.status === 'fulfilled' ? cpuTempResult.value : {};
+    const systemInformationCpuTemperature = validSensorValue(temp.main, 1, 150) ?? validSensorValue(temp.max, 1, 150);
+    const cpuMainTemperature = systemInformationCpuTemperature ?? monitorCpuTemperature.value;
+    const cpuCores = Array.isArray(temp.cores) && temp.cores.length
+      ? temp.cores.filter((value) => validSensorValue(value, 1, 150) !== null)
+      : monitorCpuTemperature.cores;
     const cpuTemperature = {
-      main: Number.isFinite(Number(temp.main)) && temp.main !== null && Number(temp.main) > 0 ? Number(temp.main) : null,
-      max: Number.isFinite(Number(temp.max)) && temp.max !== null && Number(temp.max) > 0 ? Number(temp.max) : null,
-      cores: Array.isArray(temp.cores) ? temp.cores.filter(Number.isFinite) : []
+      main: cpuMainTemperature,
+      max: validSensorValue(temp.max, 1, 150) ?? (cpuCores.length ? Math.max(...cpuCores) : cpuMainTemperature),
+      cores: cpuCores
     };
-    response.json({ gpu: gpu[0] || null, gpus: gpu, ignoredVirtualGpus: controllers.filter(isVirtualController).map((controller) => controller.model || 'Adaptador virtual'), cpuTemperature, capturedAt: new Date().toISOString() });
+    const selectedGpu = gpu[0] || null;
+    const systemInformationGpuUsage = selectedGpu?.utilization !== null && selectedGpu?.utilization !== undefined
+      ? selectedGpu.utilization
+      : null;
+    const gpuTemperatureAvailable = selectedGpu?.temperature !== null && selectedGpu?.temperature !== undefined;
+    const cpuTemperatureAvailable = cpuTemperature.main !== null;
+    const gpuUsageAvailable = systemInformationGpuUsage !== null || windowsGpuUsage !== null;
+    const sensorStatus = {
+      available: gpuUsageAvailable || cpuTemperatureAvailable || gpuTemperatureAvailable,
+      provider: monitor.provider || 'Windows nativo',
+      sources: {
+        gpuUsage: systemInformationGpuUsage !== null && systemInformationGpuUsage !== windowsGpuUsage
+          ? 'systeminformation/driver'
+          : windowsGpuUsage !== null ? 'contador GPU do Windows' : null,
+        cpuTemperature: systemInformationCpuTemperature !== null ? 'ACPI/systeminformation' : monitorCpuTemperature.value !== null ? monitor.provider : null,
+        gpuTemperature: selectedGpu?.temperature !== null && selectedGpu?.temperature !== undefined
+          ? monitorGpuTemperature.value !== null ? monitor.provider : 'systeminformation/driver'
+          : null
+      },
+      message: !gpuUsageAvailable && !cpuTemperatureAvailable && !gpuTemperatureAvailable
+        ? 'Nenhum sensor adicional foi exposto pelo Windows.'
+        : !cpuTemperatureAvailable && !gpuTemperatureAvailable
+          ? 'Uso da GPU disponível; temperaturas exigem um provedor de sensores no Windows.'
+          : 'Sensores consultados',
+      help: !cpuTemperatureAvailable || !gpuTemperatureAvailable
+        ? 'Para temperaturas, execute o LibreHardwareMonitor como administrador e mantenha-o aberto.'
+        : null
+    };
+    response.json({
+      gpu: selectedGpu,
+      gpus: gpu,
+      ignoredVirtualGpus: controllers.filter(isVirtualController).map((controller) => controller.model || 'Adaptador virtual'),
+      cpuTemperature,
+      sensorStatus,
+      capturedAt
+    });
   } catch (error) {
-    response.json({ ...unavailable, error: 'Sensores indisponíveis neste ambiente.' });
+    response.json({ ...unavailable, error: 'Não foi possível consultar os sensores deste ambiente.' });
   }
 });
 

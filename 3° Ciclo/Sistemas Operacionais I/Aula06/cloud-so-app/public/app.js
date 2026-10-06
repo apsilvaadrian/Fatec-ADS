@@ -369,6 +369,14 @@ const sensorMaxPoints = 12;
 const validNumber = (value) => typeof value === 'number' && Number.isFinite(value);
 const displayTemp = (value) => validNumber(value) ? value.toFixed(1) + ' °C' : 'Não disponível';
 const displayPercent = (value) => validNumber(value) ? value.toFixed(1) + '%' : 'Não disponível';
+const sensorSourceLabel = (source) => ({
+  'contador GPU do Windows': 'Contador nativo do Windows',
+  'ACPI/systeminformation': 'ACPI do Windows',
+  'systeminformation/driver': 'Driver da GPU',
+  LibreHardwareMonitor: 'LibreHardwareMonitor',
+  'LibreHardwareMonitor HTTP': 'LibreHardwareMonitor (Web)',
+  OpenHardwareMonitor: 'OpenHardwareMonitor'
+}[source] || source || 'Sensor do Windows');
 
 function setTemperatureIndicator(barId, noteId, value) {
   const bar = $(barId);
@@ -409,12 +417,19 @@ async function loadHardwareSensors() {
     setText('gpu-temp-current', displayTemp(gpuTemp));
     setTemperatureIndicator('cpu-temp-bar', 'cpu-temp-note', cpuTemp);
     setTemperatureIndicator('gpu-temp-bar', 'gpu-temp-note', gpuTemp);
+    const sensorStatus = data.sensorStatus || {};
+    const cpuSource = sensorSourceLabel(sensorStatus.sources?.cpuTemperature);
+    const gpuSource = sensorSourceLabel(sensorStatus.sources?.gpuTemperature);
+    setText('cpu-temp-note', cpuTemp !== null ? `Leitura: ${cpuSource}` : sensorStatus.help || 'Sensor não disponível');
+    setText('gpu-temp-note', gpuTemp !== null ? `Leitura: ${gpuSource}` : sensorStatus.help || 'Sensor não disponível');
     setText('gpu-usage-current', displayPercent(gpuUsage));
     setText('cpu-temp-chart-current', displayTemp(cpuTemp));
     setText('gpu-temp-chart-current', displayTemp(gpuTemp));
     setText('vram-usage-current', displayPercent(vramPercent));
     setText('nav-gpu', gpuUsage !== null ? Math.round(gpuUsage) + '%' : '—');
-    setText('sensor-status', 'sensores consultados');
+    const anyTemperature = cpuTemp !== null || gpuTemp !== null;
+    setText('sensor-status', anyTemperature ? 'sensores consultados' : sensorStatus.available ? 'GPU lida · temperatura externa' : 'sensores parciais');
+    setText('sensor-disclaimer', sensorStatus.help || 'Adaptadores virtuais, como o Parsec, são ignorados na identificação da GPU física.');
 
     const time = new Date(data.capturedAt || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     sensorHistory.labels.push(time);

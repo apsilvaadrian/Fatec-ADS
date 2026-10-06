@@ -16,6 +16,8 @@ Informações exibidas: nome do host, plataforma, arquitetura, quantidade de CPU
 - navegador web atualizado;
 - conta no Render, para publicação do serviço.
 
+Para obter temperatura de CPU e GPU no Windows, o projeto reconhece o LibreHardwareMonitor pela API local e por WMI, além do OpenHardwareMonitor por WMI. No LibreHardwareMonitor, baixe uma versão compatível, abra `Options > Remote Web Server > Run` e mantenha a porta padrão `8085`. Esses sensores não fazem parte do Node.js nem são expostos por todos os drivers AMD.
+
 Verifique as versões:
 
 ```bash
@@ -83,6 +85,16 @@ O navegador consulta `/api/system` usando `fetch`. Os bytes são convertidos par
 O layout foi organizado em cartões de métricas, painéis de continuidade/runtime e uma seção de leitura acadêmica dos conceitos de Sistemas Operacionais.
 
 ## 5. Testes locais realizados
+
+### 5.0 Teste dos sensores no Windows
+
+O endpoint `/api/hardware` usa três fontes, nesta ordem:
+
+1. dados fornecidos pelo driver via `systeminformation`;
+2. contador nativo do Windows `GPU Engine` para uso da GPU;
+3. LibreHardwareMonitor pela API local `http://127.0.0.1:8085/data.json`, ou OpenHardwareMonitor/LibreHardwareMonitor por WMI para compatibilidade.
+
+Assim, o uso da GPU pode funcionar mesmo quando a temperatura não estiver disponível. O painel informa a fonte usada e apresenta uma orientação para iniciar o LibreHardwareMonitor quando o Windows não expuser os sensores térmicos.
 
 ### 5.1 Teste do servidor e da API
 
