@@ -6,7 +6,7 @@ O `cloud-so-app` é uma aplicação web acadêmica construída com Express.js e 
 
 Este manual acompanha o [relatório da atividade](RELATORIO.md), que reúne o checklist do enunciado, os testes local/Render e a comparação entre os ambientes.
 
-Informações exibidas: nome do host, plataforma, arquitetura, quantidade de CPUs, modelo do processador, memória total, memória livre, tempo de atividade do sistema, carga média e uptime do processo Node.js.
+Informações exibidas: nome do host, plataforma, arquitetura, quantidade de CPUs, modelo do processador, memória total, memória livre, percentual de RAM, uso médio da CPU, tempo de atividade do sistema, uptime do processo Node.js, quantidade de arquivos do projeto, IP principal, status geral e contexto local/cloud.
 
 ## 2. Pré-requisitos e instalação das ferramentas
 
@@ -87,6 +87,8 @@ O servidor escuta `process.env.PORT || 3000` e o endereço `0.0.0.0`, combinaç�
 O navegador consulta `/api/system` usando `fetch`. Os bytes são convertidos para unidades legíveis, o uptime é formatado em dias/horas/minutos/segundos e a tela é atualizada a cada 10 segundos.
 
 O layout foi organizado em cartões de métricas, painéis de continuidade/runtime e uma seção de leitura acadêmica dos conceitos de Sistemas Operacionais.
+
+Os indicadores da atividade ficam na seção “Visão geral”: status geral, uptime formatado, IP principal, quantidade de arquivos do projeto e ambiente de execução. O objeto `deployment` da rota `/api/system` informa modo (`local` ou `cloud`), provedor detectado, porta, `NODE_ENV` e apenas variáveis de ambiente não sensíveis.
 
 ## 5. Testes locais realizados
 

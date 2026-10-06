@@ -42,6 +42,11 @@
           <article class="metric-card accent-green"><div class="metric-icon">⊞</div><p class="metric-label">Uso da CPU</p><p class="metric-value" id="cpu-usage">—</p><div class="progress"><span id="cpu-bar"></span></div><p class="metric-note" id="cpu-model">Processadores lógicos</p></article>
           <article class="metric-card accent-pink"><div class="metric-icon">▣</div><p class="metric-label">Memória RAM</p><p class="metric-value" id="used-memory">—</p><div class="progress"><span id="memory-bar"></span></div><p class="metric-note" id="memory-percent">—</p></article>
           <article class="metric-card accent-blue"><div class="metric-icon">◌</div><p class="metric-label">Armazenamento</p><p class="metric-value" id="disk-used">—</p><div class="progress"><span id="disk-bar"></span></div><p class="metric-note" id="disk-percent">—</p></article>
+          <article class="metric-card accent-green"><div class="metric-icon">✓</div><p class="metric-label">Status geral</p><p class="metric-value" id="system-status">—</p><p class="metric-note" id="system-status-note">Estado dos recursos</p></article>
+          <article class="metric-card accent-cyan"><div class="metric-icon">◷</div><p class="metric-label">Uptime do sistema</p><p class="metric-value metric-value-small" id="overview-uptime">—</p><p class="metric-note">Tempo desde a inicialização</p></article>
+          <article class="metric-card accent-purple"><div class="metric-icon">⌁</div><p class="metric-label">IP principal</p><p class="metric-value metric-value-small" id="primary-ip">—</p><p class="metric-note">Interface IPv4 externa</p></article>
+          <article class="metric-card accent-orange"><div class="metric-icon">▤</div><p class="metric-label">Arquivos do projeto</p><p class="metric-value" id="project-file-count">—</p><p class="metric-note" id="project-file-note">Sem dependências incluídas</p></article>
+          <article class="metric-card accent-blue"><div class="metric-icon">☁</div><p class="metric-label">Ambiente</p><p class="metric-value metric-value-small" id="deployment-mode">—</p><p class="metric-note" id="deployment-note">—</p></article>
         </section>
 
         <section class="realtime-section" id="realtime">
@@ -185,6 +190,8 @@
                 <div><dt>Diretório atual</dt><dd id="cwd">—</dd></div>
                 <div><dt>Diretório temporário</dt><dd id="tmp-dir">—</dd></div>
                 <div><dt>Shell</dt><dd id="shell">—</dd></div>
+                <div><dt>Modo de execução</dt><dd id="execution-mode">—</dd></div>
+                <div><dt>Provedor</dt><dd id="deployment-provider">—</dd></div>
               </dl>
             </article>
             <article class="detail-panel">
@@ -195,6 +202,8 @@
                 <div><dt>Fuso horário</dt><dd id="timezone">—</dd></div>
                 <div><dt>Diretório raiz</dt><dd id="root-dir">—</dd></div>
                 <div><dt>Executável Node</dt><dd id="node-exec">—</dd></div>
+                <div><dt>Porta HTTP</dt><dd id="deployment-port">—</dd></div>
+                <div><dt>NODE_ENV</dt><dd id="node-environment">—</dd></div>
               </dl>
             </article>
             <article class="detail-panel">

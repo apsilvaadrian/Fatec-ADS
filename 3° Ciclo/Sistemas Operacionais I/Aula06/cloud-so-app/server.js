@@ -12,6 +12,7 @@ app.disable('x-powered-by');
 app.use(express.static(path.join(__dirname, 'public')));
 
 let previousCpu = null;
+const projectStatsCache = { capturedAt: 0, value: null };
 
 function getCpuUsage(cpus) {
   const idle = cpus.reduce((sum, cpu) => sum + cpu.times.idle, 0);
@@ -58,6 +59,74 @@ function getNetworkInfo() {
       internal: address.internal
     }))
   );
+}
+
+function getPrimaryIp(network) {
+  return network.find((item) => !item.internal && item.family === 'IPv4')?.address
+    || network.find((item) => item.family === 'IPv4')?.address
+    || null;
+}
+
+function getProjectStats() {
+  const now = Date.now();
+  if (projectStatsCache.value && now - projectStatsCache.capturedAt < 30000) return projectStatsCache.value;
+
+  const ignoredDirectories = new Set(['.git', 'node_modules']);
+  let fileCount = 0;
+  let directoryCount = 0;
+
+  function visit(directory) {
+    let entries = [];
+    try { entries = fs.readdirSync(directory, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        if (ignoredDirectories.has(entry.name)) continue;
+        directoryCount += 1;
+        visit(path.join(directory, entry.name));
+      } else if (entry.isFile()) {
+        fileCount += 1;
+      }
+    }
+  }
+
+  visit(__dirname);
+  projectStatsCache.value = { fileCount, directoryCount, root: __dirname };
+  projectStatsCache.capturedAt = now;
+  return projectStatsCache.value;
+}
+
+function getDeploymentInfo() {
+  const isRender = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID);
+  const isRailway = Boolean(process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_PROJECT_ID);
+  const isVercel = Boolean(process.env.VERCEL);
+  const provider = isRender ? 'Render' : isRailway ? 'Railway' : isVercel ? 'Vercel' : 'Execução local';
+  const cloud = isRender || isRailway || isVercel;
+
+  return {
+    mode: cloud ? 'cloud' : 'local',
+    provider,
+    port,
+    portSource: process.env.PORT ? 'Variável PORT' : 'Padrão local (3000)',
+    nodeEnvironment: process.env.NODE_ENV || 'development',
+    variables: {
+      PORT: String(port),
+      NODE_ENV: process.env.NODE_ENV || 'development',
+      RENDER: isRender ? 'detectado' : 'não definido',
+      RAILWAY: isRailway ? 'detectado' : 'não definido'
+    }
+  };
+}
+
+function getSystemStatus(cpuUsage, memoryUsagePercent, diskPercent) {
+  const values = [cpuUsage, memoryUsagePercent, diskPercent].filter((value) => Number.isFinite(value));
+  const highest = values.length ? Math.max(...values) : 0;
+  if (highest >= 90) {
+    return { state: 'attention', label: 'Atenção', message: `Recurso acima de 90% (${highest.toFixed(1)}%)` };
+  }
+  if (highest >= 75) {
+    return { state: 'warning', label: 'Monitorar', message: `Maior recurso em ${highest.toFixed(1)}%` };
+  }
+  return { state: 'ok', label: 'Normal', message: 'Recursos dentro dos limites observados' };
 }
 
 function getProcesses() {
@@ -334,6 +403,12 @@ function getSystemInfo() {
   const freeMemory = os.freemem();
   const disk = getDiskInfo();
   const processMemory = process.memoryUsage();
+  const network = getNetworkInfo();
+  const cpuUsage = getCpuUsage(cpus);
+  const memoryUsagePercent = totalMemory ? ((totalMemory - freeMemory) / totalMemory) * 100 : 0;
+  const diskUsagePercent = disk.total ? (disk.used / disk.total) * 100 : 0;
+  const project = getProjectStats();
+  const deployment = getDeploymentInfo();
 
   return {
     hostname: os.hostname(),
@@ -345,11 +420,16 @@ function getSystemInfo() {
     cpuCount: cpus.length,
     cpuModel: cpus[0]?.model || 'Não informado',
     cpuSpeed: cpus[0]?.speed || 0,
-    cpuUsage: getCpuUsage(cpus),
+    cpuUsage,
     totalMemory,
     freeMemory,
     usedMemory: Math.max(0, totalMemory - freeMemory),
-    memoryUsagePercent: totalMemory ? ((totalMemory - freeMemory) / totalMemory) * 100 : 0,
+    memoryUsagePercent,
+    diskUsagePercent,
+    primaryIp: getPrimaryIp(network),
+    project,
+    deployment,
+    systemStatus: getSystemStatus(cpuUsage, memoryUsagePercent, diskUsagePercent),
     disk,
     disks: getDiskList(),
     cpuInfo: cpus.map((cpu, index) => ({
@@ -375,7 +455,7 @@ function getSystemInfo() {
     },
     uptime: os.uptime(),
     loadAverage: os.loadavg(),
-    network: getNetworkInfo(),
+    network,
     networkStats: { interfaceCount: Object.keys(os.networkInterfaces()).length },
     nodeVersion: process.version,
     processPid: process.pid,

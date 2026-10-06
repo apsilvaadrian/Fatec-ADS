@@ -81,6 +81,14 @@ async function loadSystemInfo() {
     setBar('disk-bar', diskPercent);
 
     setText('uptime', formatDuration(info.uptime));
+    setText('overview-uptime', formatDuration(info.uptime));
+    setText('system-status', info.systemStatus?.label || 'Não informado');
+    setText('system-status-note', info.systemStatus?.message || 'Estado dos recursos');
+    setText('primary-ip', info.primaryIp || 'Não informado');
+    setText('project-file-count', info.project?.fileCount ?? 'Não informado');
+    setText('project-file-note', info.project ? `${info.project.directoryCount} pasta(s) · node_modules excluído` : 'Sem dados');
+    setText('deployment-mode', info.deployment?.mode === 'cloud' ? 'Cloud' : 'Local');
+    setText('deployment-note', info.deployment ? `${info.deployment.provider} · porta ${info.deployment.port}` : 'Ambiente não informado');
     setText('load-average', (info.loadAverage || []).map((value) => Number(value).toFixed(2)).join(' · ') || 'Não disponível');
     setText('node-version', info.nodeVersion);
     setText('process-pid', info.processPid);
@@ -94,11 +102,15 @@ async function loadSystemInfo() {
     setText('cwd', info.environment?.cwd || 'Não informado');
     setText('tmp-dir', info.environment?.tmp || 'Não informado');
     setText('shell', info.environment?.shell || 'Não informado');
+    setText('execution-mode', info.deployment?.mode || 'Não informado');
+    setText('deployment-provider', info.deployment?.provider || 'Não informado');
     setText('cpu-endianness', info.environment?.endianness || 'Não informado');
     setText('eol', info.environment?.eol === '\r\n' ? 'CRLF (Windows)' : 'LF (Unix/Linux/macOS)');
     setText('timezone', info.environment?.timezone || 'UTC');
     setText('root-dir', info.environment?.root || 'Não informado');
     setText('node-exec', info.environment?.nodeExec || 'Não informado');
+    setText('deployment-port', info.deployment?.port || 'Não informado');
+    setText('node-environment', info.deployment?.nodeEnvironment || 'Não informado');
     setText('v8-version', info.runtime?.v8 || 'Não informado');
     setText('uv-version', info.runtime?.uv || 'Não informado');
     setText('openssl-version', info.runtime?.openssl || 'Não informado');
