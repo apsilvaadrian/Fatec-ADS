@@ -39,7 +39,9 @@ function renderExtraPcInfo(info) {
   const cpuList = $('cpu-list');
   if (cpuList) cpuList.innerHTML = (info.cpuInfo || []).map(cpu => '<div class="info-row"><strong>CPU ' + cpu.id + '</strong><span>' + escapeHtml(cpu.model) + '</span><code>' + (cpu.speed || 0) + ' MHz</code></div>').join('');
   const diskList = $('disk-list-extra');
-  if (diskList) diskList.innerHTML = (info.disks || []).map(d => '<div class="info-row"><strong>' + escapeHtml(d.drive) + '</strong><span>' + formatBytes(d.used) + ' usados</span><code>' + formatBytes(d.total) + '</code></div>').join('') || '<p class="empty-state">Não disponível</p>';
+  if (diskList && !diskList.dataset.storageSource) {
+    diskList.innerHTML = '<p class="storage-loading">Consultando modelo e características dos discos físicos…</p>';
+  }
 }
 
 function renderMemoryLayout(layout) {
@@ -74,8 +76,21 @@ function renderStorageLayout(storage) {
   const available = Boolean(storage?.available && storage.disks?.length);
   const list = $('disk-list-extra');
   if (list) {
+    list.dataset.storageSource = 'hardware';
     list.innerHTML = available
-      ? storage.disks.map((disk, index) => '<div class="info-row"><strong>' + escapeHtml(disk.brand || disk.model || `Disco ${index + 1}`) + '</strong><span>' + escapeHtml(`${disk.model || 'Modelo não informado'} · ${disk.type || 'Tipo não informado'} · ${disk.interfaceType || 'Interface não informada'}`) + '</span><code>' + formatBytes(disk.size) + '</code></div>').join('')
+      ? storage.disks.map((disk, index) => {
+        const model = disk.model || `Disco ${index + 1}`;
+        const manufacturer = disk.brand && disk.brand !== model ? disk.brand : 'Fabricante não informado';
+        const specs = [
+          ['Modelo', model],
+          ['Tipo', disk.type || 'Não informado'],
+          ['Interface', disk.interfaceType || 'Não informada'],
+          ['Saúde', disk.smartStatus || 'Não informado'],
+          ['Firmware', disk.firmware || 'Não informado'],
+          ['Temperatura', validNumber(disk.temperature) ? `${disk.temperature.toFixed(1)} °C` : 'Não informada']
+        ];
+        return '<article class="storage-device"><div class="storage-device-heading"><div><strong>' + escapeHtml(manufacturer) + '</strong><span>' + escapeHtml(model) + '</span></div><code>' + formatBytes(disk.size) + '</code></div><dl class="storage-device-specs">' + specs.map(([label, value]) => '<div><dt>' + escapeHtml(label) + '</dt><dd>' + escapeHtml(value) + '</dd></div>').join('') + '</dl></article>';
+      }).join('')
       : '<p class="empty-state">Discos físicos não disponíveis neste ambiente.</p>';
   }
   const io = storage?.io || {};
@@ -191,6 +206,62 @@ function enableFloatingStatusDrag() {
 }
 
 enableFloatingStatusDrag();
+
+function enableCardFloating() {
+  const tray = $('floating-cards-tray');
+  if (!tray) return;
+
+  const selector = '.metric-card, .chart-card, .sensor-card, .detail-panel, .concepts-grid article';
+  const cards = [...document.querySelectorAll(selector)].filter((card) => !card.closest('#resource-status-widget'));
+
+  const getTitle = (card, index) => {
+    const heading = card.querySelector('.metric-label, .chart-heading h3, .panel-heading h2, .sensor-card h3, .concepts-grid h3, h2, h3');
+    return heading?.textContent.replace(/\s+/g, ' ').trim() || `Card ${index + 1}`;
+  };
+
+  const setButtonState = (card, floating, title) => {
+    const button = card.querySelector(':scope > .card-float-toggle');
+    if (!button) return;
+    button.title = floating ? 'Voltar o card para o painel' : 'Flutuar este card';
+    button.setAttribute('aria-label', floating ? `Voltar ${title} para o painel` : `Flutuar ${title}`);
+    button.innerHTML = `<span aria-hidden="true">${floating ? '×' : '⤢'}</span><span class="sr-only">${floating ? 'Voltar ao painel' : 'Flutuar card'}</span>`;
+  };
+
+  const toggleCard = (card, floating, title) => {
+    if (floating) {
+      if (card.dataset.floating === 'true') return;
+      const placeholder = document.createComment(`placeholder-${title}`);
+      card.parentNode.insertBefore(placeholder, card);
+      card._floatingPlaceholder = placeholder;
+      card.dataset.floating = 'true';
+      card.classList.add('is-floating');
+      tray.appendChild(card);
+      setButtonState(card, true, title);
+      return;
+    }
+
+    const placeholder = card._floatingPlaceholder;
+    if (placeholder?.parentNode) placeholder.parentNode.insertBefore(card, placeholder.nextSibling);
+    placeholder?.remove();
+    card._floatingPlaceholder = null;
+    card.dataset.floating = 'false';
+    card.classList.remove('is-floating');
+    setButtonState(card, false, title);
+  };
+
+  cards.forEach((card, index) => {
+    card.classList.add('floatable-card');
+    const title = getTitle(card, index);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'card-float-toggle';
+    button.addEventListener('click', () => toggleCard(card, card.dataset.floating !== 'true', title));
+    card.appendChild(button);
+    setButtonState(card, false, title);
+  });
+}
+
+enableCardFloating();
 
 async function loadSystemInfo() {
   try {

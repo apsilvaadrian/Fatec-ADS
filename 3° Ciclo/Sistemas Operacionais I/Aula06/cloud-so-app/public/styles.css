@@ -82,6 +82,52 @@ section[id],article[id]{scroll-margin-top:105px}
 @media(max-width:760px){.environment-grid{grid-template-columns:1fr}.task-section,.network-section,.environment-section{padding-top:65px}}
 html[data-theme="dark"] .sidebar-nav::-webkit-scrollbar-thumb{background:#334155}
 
+/* Cards flutuantes e ações rápidas */
+.floatable-card{position:relative}
+.card-float-toggle{position:absolute;top:12px;right:12px;z-index:2;width:28px;height:28px;display:grid;place-items:center;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--muted);font:600 1rem/1 Inter,system-ui,sans-serif;cursor:pointer;opacity:.72;transition:color .2s,border-color .2s,background .2s,opacity .2s}
+.card-float-toggle:hover,.card-float-toggle:focus-visible{opacity:1;color:var(--primary);border-color:#93c5fd;background:var(--surface2);outline:none}
+.floatable-card > .panel-heading,.floatable-card > .chart-heading{padding-right:40px}
+.floatable-card > h3{padding-right:38px}
+.floating-cards-tray{position:fixed;right:22px;bottom:22px;z-index:39;display:flex;flex-direction:column;gap:12px;width:min(390px,calc(100vw - 44px));max-height:calc(100vh - 44px);overflow:auto;pointer-events:none}
+.floating-cards-tray:empty{display:none}
+.floating-cards-tray > .floatable-card{width:100%;max-height:min(520px,calc(100vh - 44px));overflow:auto;flex:0 0 auto;pointer-events:auto;margin:0;box-shadow:0 16px 38px rgba(15,23,42,.2)}
+.floating-cards-tray > .floatable-card .card-float-toggle{opacity:1}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Ícones laterais iguais aos ícones de CPU e RAM dos cards superiores */
+.nav-symbol.nav-icon-cpu,.nav-symbol.nav-icon-ram{display:block;position:relative;flex:0 0 20px;width:20px;height:20px;color:currentColor;font-size:0;line-height:1}
+.nav-symbol.nav-icon-cpu{border:2px solid currentColor;border-radius:3px}
+.nav-symbol.nav-icon-cpu::before{content:'';position:absolute;inset:4px;border:1.5px solid currentColor;border-radius:1px}
+.nav-symbol.nav-icon-cpu::after{content:'';position:absolute;inset:-5px 3px;border-top:2px solid currentColor;border-bottom:2px solid currentColor}
+.nav-symbol.nav-icon-ram{border:2px solid currentColor;border-radius:3px}
+.nav-symbol.nav-icon-ram::before{content:'';position:absolute;inset:3px 2px;background:repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 5px)}
+.nav-symbol.nav-icon-ram::after{content:'';position:absolute;left:3px;right:3px;bottom:-6px;border-bottom:2px solid currentColor;box-shadow:0 3px 0 -1px currentColor}
+.nav-symbol.nav-icon-network{position:relative;flex:0 0 20px;width:20px;height:20px;font-size:0;color:currentColor}
+.nav-symbol.nav-icon-network::before{content:'';position:absolute;inset:1px;border:2px solid currentColor;border-radius:50%}
+.nav-symbol.nav-icon-network::after{content:'';position:absolute;inset:4px 2px;border-top:1px solid currentColor;border-bottom:1px solid currentColor;border-radius:50%;box-shadow:6px 0 0 -5px currentColor,-6px 0 0 -5px currentColor}
+
+/* Ícones de topo com a mesma caixa visual */
+.metric-icon{display:grid;place-items:center;width:20px;height:20px;line-height:20px;font-size:1rem}
+.metric-icon-memory{height:20px;margin-top:0}
+
+/* Exibição estável e detalhada dos discos físicos */
+.storage-loading{margin:0;color:var(--soft);font-size:.75rem}
+.storage-device{padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
+.storage-device + .storage-device{margin-top:10px}
+.storage-device-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.storage-device-heading strong{display:block;color:var(--ink);font-size:.82rem}
+.storage-device-heading span{display:block;margin-top:4px;color:var(--muted);font-size:.7rem;overflow-wrap:anywhere}
+.storage-device-heading code{flex:0 0 auto;color:var(--primary);font:600 .7rem 'JetBrains Mono',monospace}
+.storage-device-specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+.storage-device-specs div{min-width:0;padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--surface)}
+.storage-device-specs dt{color:var(--soft);font-size:.6rem;text-transform:uppercase;letter-spacing:.06em}
+.storage-device-specs dd{margin:4px 0 0;color:var(--ink);font-size:.7rem;overflow-wrap:anywhere}
+.panel-symbol-globe{position:relative;font-size:0}
+.panel-symbol-globe::before{content:'';position:absolute;inset:8px;border:2px solid currentColor;border-radius:50%}
+.panel-symbol-globe::after{content:'';position:absolute;left:7px;right:7px;top:15px;height:4px;border-top:1px solid currentColor;border-bottom:1px solid currentColor;border-radius:50%}
+html[data-theme="dark"] .card-float-toggle{background:var(--surface);color:var(--muted)}
+@media(max-width:760px){.floating-cards-tray{right:14px;bottom:14px;width:calc(100vw - 28px);max-height:calc(100vh - 28px)}.floating-cards-tray > .floatable-card{max-height:calc(100vh - 28px)}}
+
 .nav-link{position:relative}
 .nav-live{margin-left:auto;font:700 .62rem "JetBrains Mono",monospace;color:var(--primary);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:3px 5px}
 .pc-details-section{padding-top:88px}
