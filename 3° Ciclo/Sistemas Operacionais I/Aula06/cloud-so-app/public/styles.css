@@ -45,27 +45,7 @@ html[data-theme="dark"] .resource-status-widget.status-warning{--accent:#facc15}
 html[data-theme="dark"] .resource-status-row.status-warning{--row-color:#facc15}
 @media(max-width:760px){.resource-status-widget{right:14px;bottom:14px;width:calc(100% - 28px)}}
 
-/* Ícones monocromáticos e padronizados da navegação */
-.nav-symbol{display:inline-grid;place-items:center;flex:0 0 18px;width:18px;height:18px;color:inherit;font-size:1rem;line-height:1;font-family:"Segoe UI Symbol",Inter,sans-serif}
-.nav-icon-cpu::before{content:'▣'}
-.nav-icon-ram::before{content:'▦'}
-.nav-icon-network{font-size:.84rem;color:inherit}
 .metric-note-model{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-/* Ícones vetoriais simples dos cards de recursos */
-.accent-teal{--accent:#0f766e}
-.accent-indigo{--accent:#4f46e5}
-.accent-amber{--accent:#d97706}
-.metric-icon-chip,.metric-icon-memory,.metric-icon-globe{display:block;position:relative;width:20px;height:20px;color:var(--accent);font-size:0}
-.metric-icon-chip{border:2px solid currentColor;border-radius:3px}
-.metric-icon-chip::before{content:'';position:absolute;inset:4px;border:1.5px solid currentColor;border-radius:1px}
-.metric-icon-chip::after{content:'';position:absolute;inset:-5px 3px;border-top:2px solid currentColor;border-bottom:2px solid currentColor}
-.metric-icon-memory{height:15px;margin-top:3px;border:2px solid currentColor;border-radius:3px}
-.metric-icon-memory::before{content:'';position:absolute;inset:3px 2px;background:repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 5px)}
-.metric-icon-memory::after{content:'';position:absolute;left:3px;right:3px;bottom:-6px;border-bottom:2px solid currentColor;box-shadow:0 3px 0 -1px currentColor}
-.metric-icon-globe{border:2px solid currentColor;border-radius:50%}
-.metric-icon-globe::before{content:'';position:absolute;left:2px;right:2px;top:6px;height:5px;border-top:1px solid currentColor;border-bottom:1px solid currentColor}
-.metric-icon-globe::after{content:'';position:absolute;top:1px;bottom:1px;left:5px;right:5px;border-left:1px solid currentColor;border-right:1px solid currentColor;border-radius:50%}
 
 /* Espaçamento e navegação v3 */
 .details-grid{gap:24px;margin-top:26px}
@@ -94,20 +74,17 @@ html[data-theme="dark"] .sidebar-nav::-webkit-scrollbar-thumb{background:#334155
 .floating-cards-tray > .floatable-card .card-float-toggle{opacity:1}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
-/* Ícones laterais iguais aos ícones de CPU e RAM dos cards superiores */
-.nav-symbol.nav-icon-cpu,.nav-symbol.nav-icon-ram{display:block;position:relative;flex:0 0 14px;width:14px;height:14px;color:currentColor;font-size:0;line-height:1}
-.nav-symbol.nav-icon-cpu{border:1.5px solid currentColor;border-radius:2px}
-.nav-symbol.nav-icon-cpu::before{content:'';position:absolute;inset:2.5px;border:1px solid currentColor;border-radius:1px}
-.nav-symbol.nav-icon-cpu::after{content:'';position:absolute;inset:-3px 2.5px;border-top:1.5px solid currentColor;border-bottom:1.5px solid currentColor}
-.nav-symbol.nav-icon-ram{border:1.5px solid currentColor;border-radius:2px}
-.nav-symbol.nav-icon-ram::before{content:'';position:absolute;inset:2.5px 1.5px;background:repeating-linear-gradient(90deg,currentColor 0 1px,transparent 1px 3px)}
-.nav-symbol.nav-icon-ram::after{content:'';position:absolute;left:2px;right:2px;bottom:-3px;border-bottom:1.5px solid currentColor;box-shadow:0 1.5px 0 -1px currentColor}
-.nav-symbol.nav-icon-network{font-size:.84rem;color:inherit}
+/* Símbolos originais da navegação */
+.nav-symbol.nav-icon-cpu,.nav-symbol.nav-icon-ram{display:inline;position:static;flex:0 0 auto;width:auto;height:auto;color:inherit;font-size:1rem;line-height:1;font-family:"Segoe UI Symbol",Inter,system-ui,sans-serif}
+.nav-symbol.nav-icon-cpu::before{content:'⚙'}
+.nav-symbol.nav-icon-ram::before{content:'▣'}
+.nav-symbol.nav-icon-network{font-size:0;color:inherit}
+.nav-symbol.nav-icon-network::before{content:'🌐︎';font-size:1rem}
+.nav-symbol.nav-icon-cpu::after,.nav-symbol.nav-icon-ram::after,.nav-symbol.nav-icon-network::after{content:none}
 
-/* Ícones de topo com a mesma caixa visual */
-.metric-icon{display:grid;place-items:center;width:20px;height:20px;line-height:20px;font-size:1rem}
-.metric-icon-memory{height:20px;margin-top:0}
-.metric-icon-network{width:18px;height:18px}
+.accent-teal{--accent:#0f766e}
+.accent-indigo{--accent:#4f46e5}
+.accent-amber{--accent:#d97706}
 
 /* Exibição estável e detalhada dos discos físicos */
 .storage-loading{margin:0;color:var(--soft);font-size:.75rem}
@@ -121,9 +98,6 @@ html[data-theme="dark"] .sidebar-nav::-webkit-scrollbar-thumb{background:#334155
 .storage-device-specs div{min-width:0;padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--surface)}
 .storage-device-specs dt{color:var(--soft);font-size:.6rem;text-transform:uppercase;letter-spacing:.06em}
 .storage-device-specs dd{margin:4px 0 0;color:var(--ink);font-size:.7rem;overflow-wrap:anywhere}
-.panel-symbol-globe{position:relative;font-size:0;color:var(--primary)}
-.panel-symbol-globe::before{content:'';position:absolute;inset:8px;border:2px solid currentColor;border-radius:50%}
-.panel-symbol-globe::after{content:'';position:absolute;left:7px;right:7px;top:15px;height:4px;border-top:1px solid currentColor;border-bottom:1px solid currentColor;border-radius:50%}
 html[data-theme="dark"] .card-float-toggle{background:var(--surface);color:var(--muted)}
 @media(max-width:760px){.floating-cards-tray{right:14px;bottom:14px;width:calc(100vw - 28px);max-height:calc(100vh - 28px)}.floating-cards-tray > .floatable-card{max-height:calc(100vh - 28px)}}
 
