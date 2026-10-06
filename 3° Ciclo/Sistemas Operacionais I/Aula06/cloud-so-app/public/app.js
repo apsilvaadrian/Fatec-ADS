@@ -42,6 +42,24 @@ function renderExtraPcInfo(info) {
   if (diskList) diskList.innerHTML = (info.disks || []).map(d => '<div class="info-row"><strong>' + escapeHtml(d.drive) + '</strong><span>' + formatBytes(d.used) + ' usados</span><code>' + formatBytes(d.total) + '</code></div>').join('') || '<p class="empty-state">Não disponível</p>';
 }
 
+function renderMemoryLayout(layout) {
+  const available = Boolean(layout?.available && layout.modules?.length);
+  setText('ram-frequency-extra', available
+    ? layout.frequenciesMHz?.length ? layout.frequenciesMHz.map((value) => `${value} MHz`).join(' / ') : 'Não informado'
+    : 'Não disponível');
+  setText('ram-slots-extra', available ? `${layout.moduleCount} pente(s)` : 'Não disponível');
+  setText('ram-channel-extra', available ? layout.channelMode || 'Não informado' : 'Não disponível');
+  setText('ram-layout-note', available
+    ? `${layout.type || 'Memória'} · canais identificados: ${layout.channels?.length ? layout.channels.join(' / ') : 'não informado'}`
+    : 'Detalhes dos módulos não disponíveis neste ambiente.');
+
+  const modules = $('ram-modules-extra');
+  if (!modules) return;
+  modules.innerHTML = available
+    ? layout.modules.map((module, index) => '<div class="info-row"><strong>' + escapeHtml(module.slot || `Pente ${index + 1}`) + '</strong><span>' + formatBytes(module.capacity) + ' · ' + escapeHtml(module.type || 'RAM') + '</span><code>' + (module.clockSpeed ? module.clockSpeed + ' MHz' : '—') + '</code></div>').join('')
+    : '';
+}
+
 async function loadSystemInfo() {
   try {
     const response = await fetch('/api/system', { cache: 'no-store' });
@@ -59,6 +77,8 @@ async function loadSystemInfo() {
     setText('cpu-count', info.cpuCount);
     setText('cpu-model', info.cpuModel);
     setText('cpu-model-detail', info.cpuModel);
+    setText('cpu-logical-note', `${info.cpuCount} processadores lógicos`);
+    setText('chart-cpu-model', info.cpuModel || 'Modelo não informado');
     setText('cpu-speed', info.cpuSpeed ? `${info.cpuSpeed} MHz` : 'Não informado');
     setText('cpu-usage', `${info.cpuUsage.toFixed(1)}%`);
     setText('nav-cpu', `${info.cpuUsage.toFixed(0)}%`);
@@ -409,6 +429,7 @@ async function loadHardwareSensors() {
     const response = await fetch('/api/hardware', { cache: 'no-store' });
     if (!response.ok) throw new Error('Falha ao consultar sensores');
     const data = await response.json();
+    renderMemoryLayout(data.memoryLayout);
     const gpu = data.gpu || null;
     const cpuTemp = validNumber(data.cpuTemperature?.main) ? data.cpuTemperature.main
       : validNumber(data.cpuTemperature?.max) ? data.cpuTemperature.max : null;

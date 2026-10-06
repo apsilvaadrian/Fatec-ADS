@@ -53,6 +53,7 @@ section[id],article[id]{scroll-margin-top:105px}
 .chart-card-wide{grid-row:span 1}
 .chart-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:8px}
 .chart-heading h3{margin:0;font-size:1.05rem}
+.chart-subtitle{max-width:520px;margin:5px 0 0;color:var(--muted);font-size:.7rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chart-current{font-family:'JetBrains Mono',monospace;font-size:1.05rem;color:var(--primary);background:var(--surface);border:1px solid var(--line);padding:6px 9px;border-radius:8px}
 .chart-wrap{height:210px;position:relative}
 .realtime-section .chart-card:nth-child(1){grid-column:1/-1}

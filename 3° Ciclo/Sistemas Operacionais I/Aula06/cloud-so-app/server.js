@@ -13,6 +13,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let previousCpu = null;
 const projectStatsCache = { capturedAt: 0, value: null };
+const memoryLayoutCache = { capturedAt: 0, value: null, pending: null };
 
 function getCpuUsage(cpus) {
   const idle = cpus.reduce((sum, cpu) => sum + cpu.times.idle, 0);
@@ -93,6 +94,60 @@ function getProjectStats() {
   projectStatsCache.value = { fileCount, directoryCount, root: __dirname };
   projectStatsCache.capturedAt = now;
   return projectStatsCache.value;
+}
+
+function normalizeMemoryLayout(layout) {
+  const modules = asArray(layout)
+    .filter((module) => Number(module?.size) > 0)
+    .map((module, index) => ({
+      slot: String(module.bank || module.deviceLocator || `Módulo ${index + 1}`),
+      capacity: Number(module.size),
+      type: String(module.type || 'Não informado'),
+      clockSpeed: Number(module.clockSpeed) || 0,
+      formFactor: String(module.formFactor || 'Não informado'),
+      manufacturer: String(module.manufacturer || 'Não informado'),
+      partNumber: String(module.partNum || 'Não informado')
+    }));
+
+  const channels = [...new Set(modules.map((module) => {
+    const match = module.slot.match(/channel\s+([a-z])/i);
+    return match ? match[1].toUpperCase() : null;
+  }).filter(Boolean))];
+  const frequencies = [...new Set(modules.map((module) => module.clockSpeed).filter((value) => value > 0))];
+  const channelMode = channels.length >= 2
+    ? modules.length % 2 === 0 ? 'Dual channel provável' : 'Dual channel assimétrico'
+    : channels.length === 1 && modules.length > 1 ? 'Single channel provável' : 'Não informado';
+
+  return {
+    available: modules.length > 0,
+    moduleCount: modules.length,
+    totalBytes: modules.reduce((sum, module) => sum + module.capacity, 0),
+    type: modules[0]?.type || 'Não informado',
+    frequencyMHz: frequencies.length === 1 ? frequencies[0] : null,
+    frequenciesMHz: frequencies,
+    channels,
+    channelMode,
+    modules
+  };
+}
+
+async function getCachedMemoryLayout() {
+  const now = Date.now();
+  if (memoryLayoutCache.value && now - memoryLayoutCache.capturedAt < 30000) return memoryLayoutCache.value;
+  if (memoryLayoutCache.pending) return memoryLayoutCache.pending;
+
+  memoryLayoutCache.pending = si.memLayout()
+    .then((layout) => {
+      const value = normalizeMemoryLayout(layout);
+      memoryLayoutCache.value = value;
+      memoryLayoutCache.capturedAt = Date.now();
+      return value;
+    })
+    .catch(() => normalizeMemoryLayout([]))
+    .finally(() => {
+      memoryLayoutCache.pending = null;
+    });
+  return memoryLayoutCache.pending;
 }
 
 function getDeploymentInfo() {
@@ -386,6 +441,20 @@ function findMonitorGpuUsage(sensors) {
   return values.length ? Math.min(100, Math.max(...values)) : null;
 }
 
+function findMonitorClock(sensors, kind, memory = false) {
+  const candidates = sensors.filter((sensor) => {
+    const type = String(sensor.sensorType || '').toLowerCase();
+    const identity = sensorIdentity(sensor);
+    const name = String(sensor.name || '').toLowerCase();
+    const isClock = type === 'clock' || type === 'frequency';
+    const isGpu = /gpu|graphics|radeon|geforce|nvidia|arc|display/.test(identity);
+    const isMemory = /memory|mem|vram/.test(name);
+    return isClock && isGpu && (memory ? isMemory : !isMemory) && validSensorValue(sensor.value, 1, 100000) !== null;
+  });
+  const selected = candidates.find((sensor) => /core|engine|shader/i.test(String(sensor.name))) || candidates[0];
+  return selected ? validSensorValue(selected.value, 1, 100000) : null;
+}
+
 function getResourceUsage() {
   const usage = process.resourceUsage();
   return {
@@ -481,18 +550,24 @@ app.get('/api/hardware', async (_request, response) => {
   const capturedAt = new Date().toISOString();
   const unavailable = { gpu: null, cpuTemperature: null, sensorStatus: { available: false }, capturedAt };
   try {
-    const [graphicsResult, cpuTempResult, monitorResult, gpuUsageResult] = await Promise.allSettled([
+    const [graphicsResult, cpuTempResult, monitorResult, gpuUsageResult, memoryLayoutResult] = await Promise.allSettled([
       si.graphics(),
       si.cpuTemperature(),
       getWindowsMonitorSensors(),
-      getCachedWindowsGpuUsage()
+      getCachedWindowsGpuUsage(),
+      getCachedMemoryLayout()
     ]);
     const controllers = graphicsResult.status === 'fulfilled' ? (graphicsResult.value.controllers || []) : [];
     const monitor = monitorResult.status === 'fulfilled' ? monitorResult.value : { provider: null, sensors: [] };
     const monitorCpuTemperature = findMonitorTemperature(monitor.sensors, 'cpu');
     const monitorGpuTemperature = findMonitorTemperature(monitor.sensors, 'gpu');
     const monitorGpuUsage = findMonitorGpuUsage(monitor.sensors);
+    const monitorGpuCoreClock = findMonitorClock(monitor.sensors, 'gpu');
+    const monitorGpuMemoryClock = findMonitorClock(monitor.sensors, 'gpu', true);
     const nativeGpuUsage = gpuUsageResult.status === 'fulfilled' ? gpuUsageResult.value : null;
+    const memoryLayout = memoryLayoutResult.status === 'fulfilled'
+      ? memoryLayoutResult.value
+      : normalizeMemoryLayout([]);
     const windowsGpuUsage = monitorGpuUsage ?? nativeGpuUsage;
     const isVirtualController = (controller) => {
       const identity = [
@@ -518,8 +593,8 @@ app.get('/api/hardware', async (_request, response) => {
       memoryUsed: Number(controller.memoryUsed) || 0,
       utilization: Number.isFinite(Number(controller.utilizationGpu)) && controller.utilizationGpu !== null && Number(controller.utilizationGpu) >= 0 ? Number(controller.utilizationGpu) : windowsGpuUsage,
       temperature: Number.isFinite(Number(controller.temperatureGpu)) && controller.temperatureGpu !== null && Number(controller.temperatureGpu) > 0 ? Number(controller.temperatureGpu) : monitorGpuTemperature.value,
-      clockCore: Number.isFinite(Number(controller.clockCore)) && controller.clockCore !== null ? Number(controller.clockCore) : null,
-      clockMemory: Number.isFinite(Number(controller.clockMemory)) && controller.clockMemory !== null ? Number(controller.clockMemory) : null,
+      clockCore: Number.isFinite(Number(controller.clockCore)) && controller.clockCore !== null && Number(controller.clockCore) > 0 ? Number(controller.clockCore) : monitorGpuCoreClock,
+      clockMemory: Number.isFinite(Number(controller.clockMemory)) && controller.clockMemory !== null && Number(controller.clockMemory) > 0 ? Number(controller.clockMemory) : monitorGpuMemoryClock,
       driver: controller.driverVersion || controller.driver || 'Não informado'
     }));
     const temp = cpuTempResult.status === 'fulfilled' ? cpuTempResult.value : {};
@@ -564,6 +639,7 @@ app.get('/api/hardware', async (_request, response) => {
     response.json({
       gpu: selectedGpu,
       gpus: gpu,
+      memoryLayout,
       ignoredVirtualGpus: controllers.filter(isVirtualController).map((controller) => controller.model || 'Adaptador virtual'),
       cpuTemperature,
       sensorStatus,

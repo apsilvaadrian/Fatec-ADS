@@ -102,6 +102,8 @@ O endpoint `/api/hardware` usa três fontes, nesta ordem:
 
 Assim, o uso da GPU pode funcionar mesmo quando a temperatura não estiver disponível. O painel informa a fonte usada e apresenta uma orientação para iniciar o LibreHardwareMonitor quando o Windows não expuser os sensores térmicos.
 
+A mesma rota retorna `memoryLayout` quando o sistema expõe a organização da RAM. O objeto informa a frequência, a quantidade de pentes, a capacidade de cada módulo, o tipo de memória e os canais DIMM identificados. A indicação de dual channel é uma inferência baseada nos canais informados pelo Windows; por isso a interface usa os rótulos “provável” ou “assimétrico” quando não há confirmação direta do controlador de memória.
+
 ### 5.1 Teste do servidor e da API
 
 Em um terminal:
