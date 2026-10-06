@@ -62,3 +62,31 @@ section[id],article[id]{scroll-margin-top:105px}
 .chart-note{margin-left:auto}
 @media(max-width:800px){.charts-grid{grid-template-columns:1fr}.realtime-section .chart-card:nth-child(1){grid-column:auto}.realtime-footer{flex-wrap:wrap}.chart-note{margin-left:0}}
 html[data-theme="dark"] .chart-card{background:linear-gradient(145deg,#111827,#0f172a)}
+
+
+/* GPU e sensores térmicos */
+.gpu-thermal-section{padding-top:88px}
+.sensor-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.sensor-card{min-width:0;padding:22px;background:linear-gradient(145deg,var(--surface),var(--surface2));border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.sensor-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:#eff6ff;color:var(--primary);font-size:1.2rem;margin-bottom:17px}
+html[data-theme="dark"] .sensor-icon{background:#172b4a;color:#93c5fd}
+.sensor-card h3{font-size:1.12rem;line-height:1.4;overflow-wrap:anywhere;margin:0 0 5px}
+.sensor-subtitle{font-size:.75rem;color:var(--muted);margin:0 0 16px;overflow-wrap:anywhere}
+.sensor-reading{display:block;font-family:'JetBrains Mono',monospace;font-size:clamp(1.8rem,3vw,2.5rem);letter-spacing:-.06em;margin:10px 0;color:var(--ink)}
+.sensor-specs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.sensor-specs div{min-width:0;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}
+.sensor-specs span{display:block;color:var(--soft);font-size:.63rem;margin-bottom:6px}
+.sensor-specs strong{display:block;font-size:.72rem;overflow-wrap:anywhere;color:var(--ink)}
+.temperature-track{height:8px;background:var(--line);border-radius:20px;overflow:hidden;margin:15px 0 10px}
+.temperature-track span{display:block;height:100%;width:0;border-radius:20px;background:var(--green);transition:width .4s,background .4s}
+.temperature-track span.temp-warning{background:var(--orange)}
+.temperature-track span.temp-high{background:var(--red)}
+.temperature-track span.temp-unavailable{background:var(--soft)}
+.sensor-footnote,.sensor-disclaimer{color:var(--soft);font-size:.67rem;line-height:1.6}
+.sensor-footnote{margin:0}
+.sensor-charts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.sensor-charts-grid .chart-card{min-width:0}
+.sensor-disclaimer{margin:14px 2px 0}
+@media(max-width:980px){.sensor-summary-grid{grid-template-columns:1fr 1fr}.sensor-card-gpu{grid-column:1/-1}}
+@media(max-width:760px){.sensor-summary-grid,.sensor-charts-grid{grid-template-columns:1fr}.sensor-card-gpu{grid-column:auto}.gpu-thermal-section{padding-top:65px}}
+html[data-theme="dark"] .sensor-card{background:linear-gradient(145deg,#111827,#0f172a)}
