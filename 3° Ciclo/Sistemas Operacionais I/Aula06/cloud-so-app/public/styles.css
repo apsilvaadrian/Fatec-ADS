@@ -95,18 +95,19 @@ html[data-theme="dark"] .sidebar-nav::-webkit-scrollbar-thumb{background:#334155
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 /* Ícones laterais iguais aos ícones de CPU e RAM dos cards superiores */
-.nav-symbol.nav-icon-cpu,.nav-symbol.nav-icon-ram{display:block;position:relative;flex:0 0 16px;width:16px;height:16px;color:currentColor;font-size:0;line-height:1}
-.nav-symbol.nav-icon-cpu{border:1.5px solid currentColor;border-radius:3px}
-.nav-symbol.nav-icon-cpu::before{content:'';position:absolute;inset:3px;border:1px solid currentColor;border-radius:1px}
-.nav-symbol.nav-icon-cpu::after{content:'';position:absolute;inset:-4px 3px;border-top:1.5px solid currentColor;border-bottom:1.5px solid currentColor}
-.nav-symbol.nav-icon-ram{border:1.5px solid currentColor;border-radius:3px}
-.nav-symbol.nav-icon-ram::before{content:'';position:absolute;inset:3px 2px;background:repeating-linear-gradient(90deg,currentColor 0 1.5px,transparent 1.5px 4px)}
-.nav-symbol.nav-icon-ram::after{content:'';position:absolute;left:2px;right:2px;bottom:-4px;border-bottom:1.5px solid currentColor;box-shadow:0 2px 0 -1px currentColor}
+.nav-symbol.nav-icon-cpu,.nav-symbol.nav-icon-ram{display:block;position:relative;flex:0 0 14px;width:14px;height:14px;color:currentColor;font-size:0;line-height:1}
+.nav-symbol.nav-icon-cpu{border:1.5px solid currentColor;border-radius:2px}
+.nav-symbol.nav-icon-cpu::before{content:'';position:absolute;inset:2.5px;border:1px solid currentColor;border-radius:1px}
+.nav-symbol.nav-icon-cpu::after{content:'';position:absolute;inset:-3px 2.5px;border-top:1.5px solid currentColor;border-bottom:1.5px solid currentColor}
+.nav-symbol.nav-icon-ram{border:1.5px solid currentColor;border-radius:2px}
+.nav-symbol.nav-icon-ram::before{content:'';position:absolute;inset:2.5px 1.5px;background:repeating-linear-gradient(90deg,currentColor 0 1px,transparent 1px 3px)}
+.nav-symbol.nav-icon-ram::after{content:'';position:absolute;left:2px;right:2px;bottom:-3px;border-bottom:1.5px solid currentColor;box-shadow:0 1.5px 0 -1px currentColor}
 .nav-symbol.nav-icon-network{font-size:.84rem;color:inherit}
 
 /* Ícones de topo com a mesma caixa visual */
 .metric-icon{display:grid;place-items:center;width:20px;height:20px;line-height:20px;font-size:1rem}
 .metric-icon-memory{height:20px;margin-top:0}
+.metric-icon-network{width:18px;height:18px}
 
 /* Exibição estável e detalhada dos discos físicos */
 .storage-loading{margin:0;color:var(--soft);font-size:.75rem}
@@ -120,6 +121,9 @@ html[data-theme="dark"] .sidebar-nav::-webkit-scrollbar-thumb{background:#334155
 .storage-device-specs div{min-width:0;padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--surface)}
 .storage-device-specs dt{color:var(--soft);font-size:.6rem;text-transform:uppercase;letter-spacing:.06em}
 .storage-device-specs dd{margin:4px 0 0;color:var(--ink);font-size:.7rem;overflow-wrap:anywhere}
+.panel-symbol-globe{position:relative;font-size:0;color:var(--primary)}
+.panel-symbol-globe::before{content:'';position:absolute;inset:8px;border:2px solid currentColor;border-radius:50%}
+.panel-symbol-globe::after{content:'';position:absolute;left:7px;right:7px;top:15px;height:4px;border-top:1px solid currentColor;border-bottom:1px solid currentColor;border-radius:50%}
 html[data-theme="dark"] .card-float-toggle{background:var(--surface);color:var(--muted)}
 @media(max-width:760px){.floating-cards-tray{right:14px;bottom:14px;width:calc(100vw - 28px);max-height:calc(100vh - 28px)}.floating-cards-tray > .floatable-card{max-height:calc(100vh - 28px)}}
 

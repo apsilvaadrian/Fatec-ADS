@@ -43,7 +43,7 @@
           <article class="metric-card accent-pink"><div class="metric-icon metric-icon-memory" aria-hidden="true"></div><p class="metric-label">Memória RAM</p><p class="metric-value" id="used-memory">—</p><div class="progress"><span id="memory-bar"></span></div><p class="metric-note" id="memory-percent">—</p></article>
           <article class="metric-card accent-blue"><div class="metric-icon">◌</div><p class="metric-label">Armazenamento</p><p class="metric-value" id="disk-used">—</p><div class="progress"><span id="disk-bar"></span></div><p class="metric-note" id="disk-percent">—</p></article>
           <article class="metric-card accent-teal"><div class="metric-icon">◷</div><p class="metric-label">Uptime do sistema</p><p class="metric-value metric-value-small" id="overview-uptime">—</p><p class="metric-note">Tempo desde a inicialização</p></article>
-          <article class="metric-card accent-indigo"><div class="metric-icon metric-icon-globe" aria-hidden="true"></div><p class="metric-label">IP principal</p><p class="metric-value metric-value-small" id="primary-ip">—</p><p class="metric-note">Interface IPv4 externa</p></article>
+          <article class="metric-card accent-indigo"><div class="metric-icon metric-icon-globe metric-icon-network" aria-hidden="true"></div><p class="metric-label">IP principal</p><p class="metric-value metric-value-small" id="primary-ip">—</p><p class="metric-note">Interface IPv4 externa</p></article>
           <article class="metric-card accent-amber"><div class="metric-icon">▤</div><p class="metric-label">Arquivos do projeto</p><p class="metric-value" id="project-file-count">—</p><p class="metric-note" id="project-file-note">Sem dependências incluídas</p></article>
         </section>
 
@@ -140,7 +140,7 @@
 
         <section class="details-grid">
           <article class="detail-panel" id="network">
-            <div class="panel-heading"><div><p class="eyebrow">REDE</p><h2>Interfaces detectadas</h2></div><span class="panel-symbol">🌐</span></div>
+            <div class="panel-heading"><div><p class="eyebrow">REDE</p><h2>Interfaces detectadas</h2></div><span class="panel-symbol panel-symbol-globe" aria-hidden="true"></span></div>
             <p class="network-count"><strong id="network-count">0</strong> interface(s) externa(s)</p>
             <div class="network-list" id="network-list"></div>
           </article>
@@ -245,7 +245,7 @@
           </div>
           <div class="network-manager-grid">
             <article class="detail-panel network-info-card">
-              <div class="panel-heading"><div><p class="eyebrow">INTERFACES</p><h2>Detalhes da conexão</h2></div><span class="panel-symbol">🌐</span></div>
+              <div class="panel-heading"><div><p class="eyebrow">INTERFACES</p><h2>Detalhes da conexão</h2></div><span class="panel-symbol panel-symbol-globe" aria-hidden="true"></span></div>
               <div class="network-manager-list" id="network-manager-list"></div>
             </article>
             <article class="detail-panel">
