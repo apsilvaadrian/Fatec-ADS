@@ -222,16 +222,16 @@ app.get('/api/hardware', async (_request, response) => {
       vram: Number(controller.vram) || 0,
       memoryTotal: Number(controller.memoryTotal) || 0,
       memoryUsed: Number(controller.memoryUsed) || 0,
-      utilization: Number.isFinite(Number(controller.utilizationGpu)) ? Number(controller.utilizationGpu) : null,
-      temperature: Number.isFinite(Number(controller.temperatureGpu)) && controller.temperatureGpu !== null ? Number(controller.temperatureGpu) : null,
+      utilization: Number.isFinite(Number(controller.utilizationGpu)) && controller.utilizationGpu !== null && Number(controller.utilizationGpu) >= 0 ? Number(controller.utilizationGpu) : null,
+      temperature: Number.isFinite(Number(controller.temperatureGpu)) && controller.temperatureGpu !== null && Number(controller.temperatureGpu) > 0 ? Number(controller.temperatureGpu) : null,
       clockCore: Number.isFinite(Number(controller.clockCore)) && controller.clockCore !== null ? Number(controller.clockCore) : null,
       clockMemory: Number.isFinite(Number(controller.clockMemory)) && controller.clockMemory !== null ? Number(controller.clockMemory) : null,
       driver: controller.driverVersion || controller.driver || 'Não informado'
     }));
     const temp = cpuTempResult.status === 'fulfilled' ? cpuTempResult.value : {};
     const cpuTemperature = {
-      main: Number.isFinite(Number(temp.main)) && temp.main !== null ? Number(temp.main) : null,
-      max: Number.isFinite(Number(temp.max)) && temp.max !== null ? Number(temp.max) : null,
+      main: Number.isFinite(Number(temp.main)) && temp.main !== null && Number(temp.main) > 0 ? Number(temp.main) : null,
+      max: Number.isFinite(Number(temp.max)) && temp.max !== null && Number(temp.max) > 0 ? Number(temp.max) : null,
       cores: Array.isArray(temp.cores) ? temp.cores.filter(Number.isFinite) : []
     };
     response.json({ gpu: gpu[0] || null, gpus: gpu, cpuTemperature, capturedAt: new Date().toISOString() });
