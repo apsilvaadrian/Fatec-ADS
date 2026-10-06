@@ -393,9 +393,9 @@ async function loadHardwareSensors() {
       : validNumber(data.cpuTemperature?.max) ? data.cpuTemperature.max : null;
     const gpuTemp = validNumber(gpu?.temperature) ? gpu.temperature : null;
     const gpuUsage = validNumber(gpu?.utilization) ? gpu.utilization : null;
-    const vramTotal = validNumber(gpu?.memoryTotal) && gpu.memoryTotal > 0 ? gpu.memoryTotal
+    const vramTotal = validNumber(gpu?.memoryTotal) && gpu.memoryTotal > 0 ? gpu.memoryTotal * 1024 * 1024
       : validNumber(gpu?.vram) && gpu.vram > 0 ? gpu.vram * 1024 * 1024 : 0;
-    const vramUsed = validNumber(gpu?.memoryUsed) && gpu.memoryUsed > 0 ? gpu.memoryUsed : null;
+    const vramUsed = validNumber(gpu?.memoryUsed) && gpu.memoryUsed >= 0 ? gpu.memoryUsed * 1024 * 1024 : null;
     const vramPercent = vramTotal > 0 && vramUsed !== null ? Math.min(100, vramUsed / vramTotal * 100) : null;
 
     setText('gpu-model', gpu?.model || (data.gpus?.length ? 'GPU detectada' : 'GPU não identificada'));
