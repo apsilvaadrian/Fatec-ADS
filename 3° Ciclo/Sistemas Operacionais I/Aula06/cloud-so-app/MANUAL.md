@@ -4,6 +4,8 @@
 
 O `cloud-so-app` é uma aplicação web acadêmica construída com Express.js e Node.js. Ela coleta, no servidor, informações do sistema operacional por meio do módulo nativo `node:os` e apresenta os dados em um painel responsivo.
 
+Este manual acompanha o [relatório da atividade](RELATORIO.md), que reúne o checklist do enunciado, os testes local/Render e a comparação entre os ambientes.
+
 Informações exibidas: nome do host, plataforma, arquitetura, quantidade de CPUs, modelo do processador, memória total, memória livre, tempo de atividade do sistema, carga média e uptime do processo Node.js.
 
 ## 2. Pré-requisitos e instalação das ferramentas
@@ -47,7 +49,9 @@ cloud-so-app/
 │   └── styles.css
 ├── .gitignore
 ├── package.json
+├── package-lock.json
 ├── README.md
+├── RELATORIO.md
 ├── render.yaml
 └── server.js
 ```
