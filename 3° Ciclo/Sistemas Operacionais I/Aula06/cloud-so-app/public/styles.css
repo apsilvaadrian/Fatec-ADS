@@ -13,6 +13,13 @@ html[data-theme="dark"]{--bg:#0b1120;--surface:#111827;--surface2:#172033;--ink:
 html[data-theme="dark"] .topbar{background:rgba(11,17,32,.88)}html[data-theme="dark"] .sidebar{background:#0f172a;border-color:var(--line)}html[data-theme="dark"] .nav-link:hover{background:#172033}html[data-theme="dark"] .nav-link.active{background:#172b4a;color:#93c5fd;box-shadow:inset 3px 0 0 var(--primary)}html[data-theme="dark"] .panel-symbol{background:#172b4a;color:#93c5fd}html[data-theme="dark"] .progress{background:#263248}html[data-theme="dark"] .refresh-button,html[data-theme="dark"] .theme-button,html[data-theme="dark"] .status-pill,html[data-theme="dark"] .task-controls input,html[data-theme="dark"] .task-controls select,html[data-theme="dark"] .mobile-menu{background:#111827;color:var(--muted);border-color:var(--line)}html[data-theme="dark"] .hero-orbit .orbit{border-color:#27456d}html[data-theme="dark"] .hero-orbit .orbit-two{border-color:#4c3d78}html[data-theme="dark"] .brand,html[data-theme="dark"] .metric-value,html[data-theme="dark"] .runtime-list dd,html[data-theme="dark"] .process-table td:first-child{color:var(--ink)}html[data-theme="dark"] .nav-link{color:#94a3b8}html[data-theme="dark"] .nav-link:hover{color:#93c5fd}html[data-theme="dark"] .network-list>div,html[data-theme="dark"] .runtime-list div,html[data-theme="dark"] .process-table th,html[data-theme="dark"] .process-table td,html[data-theme="dark"] .network-manager-item,html[data-theme="dark"] .network-facts div{border-color:var(--line)}
 .theme-button{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:8px;height:34px;padding:0 11px;font:600 .7rem Inter;cursor:pointer}.theme-button:hover{color:var(--primary);border-color:#93c5fd}
 
+/* Status geral dinâmico */
+.status-card.status-ok{--accent:var(--green)}
+.status-card.status-warning{--accent:#ca8a04}
+.status-card.status-attention{--accent:var(--red)}
+.status-card .metric-value{color:var(--accent)}
+html[data-theme="dark"] .status-card.status-warning{--accent:#facc15}
+
 /* Espaçamento e navegação v3 */
 .details-grid{gap:24px;margin-top:26px}
 .detail-panel{min-height:300px}

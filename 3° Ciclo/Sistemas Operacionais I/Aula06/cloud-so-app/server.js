@@ -14,6 +14,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 let previousCpu = null;
 const projectStatsCache = { capturedAt: 0, value: null };
 const memoryLayoutCache = { capturedAt: 0, value: null, pending: null };
+const storageCache = { capturedAt: 0, value: null, pending: null };
 
 function getCpuUsage(cpus) {
   const idle = cpus.reduce((sum, cpu) => sum + cpu.times.idle, 0);
@@ -148,6 +149,79 @@ async function getCachedMemoryLayout() {
       memoryLayoutCache.pending = null;
     });
   return memoryLayoutCache.pending;
+}
+
+function normalizeStorageLayout(layout, io = {}) {
+  const disks = asArray(layout)
+    .filter((disk) => Number(disk?.size) > 0)
+    .map((disk, index) => {
+      const model = String(disk.name || disk.model || `Disco ${index + 1}`);
+      const brand = String(disk.vendor || model.split(/\s+/)[0] || 'Não informado');
+      return {
+        device: String(disk.device || `Disco ${index + 1}`),
+        model,
+        brand,
+        size: Number(disk.size),
+        type: String(disk.type || 'Não informado'),
+        interfaceType: String(disk.interfaceType || 'Não informado'),
+        smartStatus: String(disk.smartStatus || 'Não informado'),
+        firmware: String(disk.firmwareRevision || 'Não informado'),
+        temperature: Number.isFinite(Number(disk.temperature)) && Number(disk.temperature) > 0 ? Number(disk.temperature) : null
+      };
+    });
+
+  return {
+    available: disks.length > 0,
+    disks,
+    io: {
+      readBytesPerSec: Number(io.readBytesPerSec) || 0,
+      writeBytesPerSec: Number(io.writeBytesPerSec) || 0,
+      source: io.source || null
+    }
+  };
+}
+
+async function getDiskIoSpeed() {
+  if (process.platform === 'win32') {
+    const script = [
+      '$ErrorActionPreference = "SilentlyContinue"',
+      '$disk = Get-CimInstance -ClassName Win32_PerfFormattedData_PerfDisk_PhysicalDisk -Filter "Name=\'_Total\'"',
+      'if ($disk) { [pscustomobject]@{ readBytesPerSec = [double]$disk.DiskReadBytesPersec; writeBytesPerSec = [double]$disk.DiskWriteBytesPersec } | ConvertTo-Json -Compress }'
+    ].join(';');
+    const result = await runPowerShellJson(script);
+    if (result) return { ...result, source: 'Windows Performance Counters' };
+  }
+
+  try {
+    const result = await si.disksIO();
+    if (result) {
+      return {
+        readBytesPerSec: result.rIO_sec || result.readBytesPerSec || 0,
+        writeBytesPerSec: result.wIO_sec || result.writeBytesPerSec || 0,
+        source: 'systeminformation'
+      };
+    }
+  } catch {}
+  return { readBytesPerSec: 0, writeBytesPerSec: 0, source: null };
+}
+
+async function getCachedStorageInfo() {
+  const now = Date.now();
+  if (storageCache.value && now - storageCache.capturedAt < 10000) return storageCache.value;
+  if (storageCache.pending) return storageCache.pending;
+
+  storageCache.pending = Promise.all([si.diskLayout(), getDiskIoSpeed()])
+    .then(([layout, io]) => {
+      const value = normalizeStorageLayout(layout, io);
+      storageCache.value = value;
+      storageCache.capturedAt = Date.now();
+      return value;
+    })
+    .catch(() => normalizeStorageLayout([]))
+    .finally(() => {
+      storageCache.pending = null;
+    });
+  return storageCache.pending;
 }
 
 function getDeploymentInfo() {
@@ -550,12 +624,13 @@ app.get('/api/hardware', async (_request, response) => {
   const capturedAt = new Date().toISOString();
   const unavailable = { gpu: null, cpuTemperature: null, sensorStatus: { available: false }, capturedAt };
   try {
-    const [graphicsResult, cpuTempResult, monitorResult, gpuUsageResult, memoryLayoutResult] = await Promise.allSettled([
+    const [graphicsResult, cpuTempResult, monitorResult, gpuUsageResult, memoryLayoutResult, storageResult] = await Promise.allSettled([
       si.graphics(),
       si.cpuTemperature(),
       getWindowsMonitorSensors(),
       getCachedWindowsGpuUsage(),
-      getCachedMemoryLayout()
+      getCachedMemoryLayout(),
+      getCachedStorageInfo()
     ]);
     const controllers = graphicsResult.status === 'fulfilled' ? (graphicsResult.value.controllers || []) : [];
     const monitor = monitorResult.status === 'fulfilled' ? monitorResult.value : { provider: null, sensors: [] };
@@ -568,6 +643,9 @@ app.get('/api/hardware', async (_request, response) => {
     const memoryLayout = memoryLayoutResult.status === 'fulfilled'
       ? memoryLayoutResult.value
       : normalizeMemoryLayout([]);
+    const storage = storageResult.status === 'fulfilled'
+      ? storageResult.value
+      : normalizeStorageLayout([]);
     const windowsGpuUsage = monitorGpuUsage ?? nativeGpuUsage;
     const isVirtualController = (controller) => {
       const identity = [
@@ -640,6 +718,7 @@ app.get('/api/hardware', async (_request, response) => {
       gpu: selectedGpu,
       gpus: gpu,
       memoryLayout,
+      storage,
       ignoredVirtualGpus: controllers.filter(isVirtualController).map((controller) => controller.model || 'Adaptador virtual'),
       cpuTemperature,
       sensorStatus,

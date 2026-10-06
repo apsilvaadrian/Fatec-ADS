@@ -56,8 +56,49 @@ function renderMemoryLayout(layout) {
   const modules = $('ram-modules-extra');
   if (!modules) return;
   modules.innerHTML = available
-    ? layout.modules.map((module, index) => '<div class="info-row"><strong>' + escapeHtml(module.slot || `Pente ${index + 1}`) + '</strong><span>' + formatBytes(module.capacity) + ' · ' + escapeHtml(module.type || 'RAM') + '</span><code>' + (module.clockSpeed ? module.clockSpeed + ' MHz' : '—') + '</code></div>').join('')
+    ? layout.modules.map((module, index) => {
+      const model = module.partNumber && module.partNumber !== 'Não informado' ? module.partNumber : 'Modelo não informado';
+      const brand = module.manufacturer && module.manufacturer !== 'Unknown' ? module.manufacturer : model;
+      return '<div class="info-row"><strong>' + escapeHtml(module.slot || `Pente ${index + 1}`) + '</strong><span>' + escapeHtml(`${brand} · ${model} · ${formatBytes(module.capacity)} · ${module.type || 'RAM'}`) + '</span><code>' + (module.clockSpeed ? module.clockSpeed + ' MHz' : '—') + '</code></div>';
+    }).join('')
     : '';
+}
+
+function formatRate(bytesPerSecond, available = true) {
+  if (!available || !Number.isFinite(Number(bytesPerSecond))) return 'Não disponível';
+  if (Number(bytesPerSecond) === 0) return '0 B/s';
+  return `${formatBytes(Number(bytesPerSecond))}/s`;
+}
+
+function renderStorageLayout(storage) {
+  const available = Boolean(storage?.available && storage.disks?.length);
+  const list = $('disk-list-extra');
+  if (list) {
+    list.innerHTML = available
+      ? storage.disks.map((disk, index) => '<div class="info-row"><strong>' + escapeHtml(disk.brand || disk.model || `Disco ${index + 1}`) + '</strong><span>' + escapeHtml(`${disk.model || 'Modelo não informado'} · ${disk.type || 'Tipo não informado'} · ${disk.interfaceType || 'Interface não informada'}`) + '</span><code>' + formatBytes(disk.size) + '</code></div>').join('')
+      : '<p class="empty-state">Discos físicos não disponíveis neste ambiente.</p>';
+  }
+  const io = storage?.io || {};
+  const ioAvailable = Boolean(storage?.available && io.source);
+  setText('disk-io-extra', ioAvailable
+    ? `Leitura atual: ${formatRate(io.readBytesPerSec)} · gravação atual: ${formatRate(io.writeBytesPerSec)}`
+    : 'Leitura e gravação atuais não disponíveis.');
+}
+
+function renderSystemStatus(status) {
+  const config = {
+    ok: { className: 'status-ok', icon: '✓', fallbackLabel: 'Normal' },
+    warning: { className: 'status-warning', icon: '◉', fallbackLabel: 'Monitorar' },
+    attention: { className: 'status-attention', icon: '!', fallbackLabel: 'Atenção' }
+  }[status?.state] || { className: 'status-warning', icon: '◉', fallbackLabel: 'Monitorar' };
+  const card = $('status-card');
+  if (card) {
+    card.classList.remove('status-ok', 'status-warning', 'status-attention');
+    card.classList.add(config.className);
+  }
+  setText('system-status-icon', config.icon);
+  setText('system-status', status?.label || config.fallbackLabel);
+  setText('system-status-note', status?.message || 'Estado dos recursos');
 }
 
 async function loadSystemInfo() {
@@ -102,8 +143,7 @@ async function loadSystemInfo() {
 
     setText('uptime', formatDuration(info.uptime));
     setText('overview-uptime', formatDuration(info.uptime));
-    setText('system-status', info.systemStatus?.label || 'Não informado');
-    setText('system-status-note', info.systemStatus?.message || 'Estado dos recursos');
+    renderSystemStatus(info.systemStatus);
     setText('primary-ip', info.primaryIp || 'Não informado');
     setText('project-file-count', info.project?.fileCount ?? 'Não informado');
     setText('project-file-note', info.project ? `${info.project.directoryCount} pasta(s) · node_modules excluído` : 'Sem dados');
@@ -430,6 +470,7 @@ async function loadHardwareSensors() {
     if (!response.ok) throw new Error('Falha ao consultar sensores');
     const data = await response.json();
     renderMemoryLayout(data.memoryLayout);
+    renderStorageLayout(data.storage);
     const gpu = data.gpu || null;
     const cpuTemp = validNumber(data.cpuTemperature?.main) ? data.cpuTemperature.main
       : validNumber(data.cpuTemperature?.max) ? data.cpuTemperature.max : null;

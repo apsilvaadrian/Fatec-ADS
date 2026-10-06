@@ -104,6 +104,8 @@ Assim, o uso da GPU pode funcionar mesmo quando a temperatura não estiver dispo
 
 A mesma rota retorna `memoryLayout` quando o sistema expõe a organização da RAM. O objeto informa a frequência, a quantidade de pentes, a capacidade de cada módulo, o tipo de memória e os canais DIMM identificados. A indicação de dual channel é uma inferência baseada nos canais informados pelo Windows; por isso a interface usa os rótulos “provável” ou “assimétrico” quando não há confirmação direta do controlador de memória.
 
+Também é retornado o objeto `storage`, com modelo/marca identificados, capacidade, tipo do dispositivo (SSD ou HD), interface (por exemplo, NVMe), status SMART e atividade atual de leitura e gravação. As velocidades exibidas são a taxa de I/O no instante da coleta, não a velocidade máxima teórica anunciada pelo fabricante.
+
 ### 5.1 Teste do servidor e da API
 
 Em um terminal:
