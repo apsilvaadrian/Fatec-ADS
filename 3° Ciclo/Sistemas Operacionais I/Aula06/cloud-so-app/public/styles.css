@@ -52,6 +52,21 @@ html[data-theme="dark"] .resource-status-row.status-warning{--row-color:#facc15}
 .nav-icon-network{font-size:.84rem;color:inherit}
 .metric-note-model{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+/* Ícones vetoriais simples dos cards de recursos */
+.accent-teal{--accent:#0f766e}
+.accent-indigo{--accent:#4f46e5}
+.accent-amber{--accent:#d97706}
+.metric-icon-chip,.metric-icon-memory,.metric-icon-globe{display:block;position:relative;width:20px;height:20px;color:var(--accent);font-size:0}
+.metric-icon-chip{border:2px solid currentColor;border-radius:3px}
+.metric-icon-chip::before{content:'';position:absolute;inset:4px;border:1.5px solid currentColor;border-radius:1px}
+.metric-icon-chip::after{content:'';position:absolute;inset:-5px 3px;border-top:2px solid currentColor;border-bottom:2px solid currentColor}
+.metric-icon-memory{height:15px;margin-top:3px;border:2px solid currentColor;border-radius:3px}
+.metric-icon-memory::before{content:'';position:absolute;inset:3px 2px;background:repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 5px)}
+.metric-icon-memory::after{content:'';position:absolute;left:3px;right:3px;bottom:-6px;border-bottom:2px solid currentColor;box-shadow:0 3px 0 -1px currentColor}
+.metric-icon-globe{border:2px solid currentColor;border-radius:50%}
+.metric-icon-globe::before{content:'';position:absolute;left:2px;right:2px;top:6px;height:5px;border-top:1px solid currentColor;border-bottom:1px solid currentColor}
+.metric-icon-globe::after{content:'';position:absolute;top:1px;bottom:1px;left:5px;right:5px;border-left:1px solid currentColor;border-right:1px solid currentColor;border-radius:50%}
+
 /* Espaçamento e navegação v3 */
 .details-grid{gap:24px;margin-top:26px}
 .detail-panel{min-height:300px}
