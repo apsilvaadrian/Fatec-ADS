@@ -6,7 +6,7 @@ O `cloud-so-app` é uma aplicação web acadêmica construída com Express.js e 
 
 Este manual acompanha o [relatório da atividade](RELATORIO.md), que reúne o checklist do enunciado, os testes local/Render e a comparação entre os ambientes.
 
-Informações exibidas: nome do host, plataforma, arquitetura, quantidade de CPUs, modelo do processador, memória total, memória livre, percentual de RAM, uso médio da CPU, tempo de atividade do sistema, uptime do processo Node.js, quantidade de arquivos do projeto, IP principal, status geral e contexto local/cloud.
+Informações exibidas: nome do host, plataforma, arquitetura, quantidade de CPUs, modelo do processador, memória total, memória livre, percentual de RAM, uso médio da CPU, tempo de atividade do sistema, uptime do processo Node.js, quantidade de arquivos do projeto, IP principal e contexto local/cloud. O status geral fica em um painel flutuante fixo, detalhado por CPU, GPU, RAM e armazenamento.
 
 ## 2. Pré-requisitos e instalação das ferramentas
 
@@ -88,7 +88,7 @@ O navegador consulta `/api/system` usando `fetch`. Os bytes são convertidos par
 
 O layout foi organizado em cartões de métricas, painéis de continuidade/runtime e uma seção de leitura acadêmica dos conceitos de Sistemas Operacionais.
 
-Os indicadores da atividade ficam na seção “Visão geral”: status geral, uptime formatado, IP principal, quantidade de arquivos do projeto e ambiente de execução. O objeto `deployment` da rota `/api/system` informa modo (`local` ou `cloud`), provedor detectado, porta, `NODE_ENV` e apenas variáveis de ambiente não sensíveis.
+Os indicadores da atividade ficam na seção “Visão geral”: uptime formatado, IP principal e quantidade de arquivos do projeto. O status geral aparece em um painel flutuante com uma situação independente para CPU, GPU, RAM e armazenamento. O ambiente de execução fica na seção “Ambiente”. O objeto `deployment` da rota `/api/system` informa modo (`local` ou `cloud`), provedor detectado, porta, `NODE_ENV` e apenas variáveis de ambiente não sensíveis.
 
 ## 5. Testes locais realizados
 

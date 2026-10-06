@@ -85,20 +85,57 @@ function renderStorageLayout(storage) {
     : 'Leitura e gravação atuais não disponíveis.');
 }
 
-function renderSystemStatus(status) {
-  const config = {
-    ok: { className: 'status-ok', icon: '✓', fallbackLabel: 'Normal' },
-    warning: { className: 'status-warning', icon: '◉', fallbackLabel: 'Monitorar' },
-    attention: { className: 'status-attention', icon: '!', fallbackLabel: 'Atenção' }
-  }[status?.state] || { className: 'status-warning', icon: '◉', fallbackLabel: 'Monitorar' };
-  const card = $('status-card');
-  if (card) {
-    card.classList.remove('status-ok', 'status-warning', 'status-attention');
-    card.classList.add(config.className);
+const floatingResourceState = {};
+const floatingResourceIds = {
+  cpu: ['resource-status-cpu-row', 'resource-status-cpu-icon', 'resource-status-cpu'],
+  gpu: ['resource-status-gpu-row', 'resource-status-gpu-icon', 'resource-status-gpu'],
+  ram: ['resource-status-ram-row', 'resource-status-ram-icon', 'resource-status-ram'],
+  disk: ['resource-status-disk-row', 'resource-status-disk-icon', 'resource-status-disk']
+};
+const floatingStatusConfig = {
+  ok: { className: 'status-ok', icon: '✓', label: 'Normal' },
+  warning: { className: 'status-warning', icon: '◉', label: 'Monitorar' },
+  attention: { className: 'status-attention', icon: '!', label: 'Atenção' },
+  unavailable: { className: 'status-unavailable', icon: '—', label: 'Indisponível' }
+};
+
+function classifyResource(value, thresholds = { warning: 75, attention: 90 }) {
+  if (!Number.isFinite(Number(value))) return { state: 'unavailable' };
+  const number = Number(value);
+  return { state: number >= thresholds.attention ? 'attention' : number >= thresholds.warning ? 'warning' : 'ok', value: number };
+}
+
+function refreshFloatingStatus() {
+  const states = Object.values(floatingResourceState);
+  const available = states.filter((status) => status.state !== 'unavailable');
+  const overallState = available.some((status) => status.state === 'attention') ? 'attention'
+    : available.some((status) => status.state === 'warning') ? 'warning'
+      : available.length ? 'ok' : 'unavailable';
+  const config = floatingStatusConfig[overallState];
+  const widget = $('resource-status-widget');
+  if (widget) {
+    widget.classList.remove('status-ok', 'status-warning', 'status-attention', 'status-unavailable');
+    widget.classList.add(config.className);
   }
-  setText('system-status-icon', config.icon);
-  setText('system-status', status?.label || config.fallbackLabel);
-  setText('system-status-note', status?.message || 'Estado dos recursos');
+  setText('resource-status-overall', config.label);
+  setText('resource-status-overall-icon', config.icon);
+  setText('resource-status-note', `${available.length}/4 recursos com leitura · atualização automática a cada 5 segundos`);
+}
+
+function setFloatingResource(key, value, displayValue, thresholds) {
+  const status = classifyResource(value, thresholds);
+  floatingResourceState[key] = status;
+  const [rowId, iconId, valueId] = floatingResourceIds[key] || [];
+  const row = $(rowId);
+  const config = floatingStatusConfig[status.state];
+  if (row) {
+    row.classList.remove('status-ok', 'status-warning', 'status-attention', 'status-unavailable');
+    row.classList.add(config.className);
+  }
+  setText(iconId, config.icon);
+  const safeDisplayValue = displayValue ?? (Number.isFinite(status.value) ? `${status.value.toFixed(1)}%` : 'Indisponível');
+  setText(valueId, status.state === 'unavailable' ? 'Indisponível' : `${config.label} · ${safeDisplayValue}`);
+  refreshFloatingStatus();
 }
 
 async function loadSystemInfo() {
@@ -140,10 +177,12 @@ async function loadSystemInfo() {
     const diskPercent = info.disk.total ? (info.disk.used / info.disk.total) * 100 : 0;
     setText('disk-percent', info.disk.total ? `${diskPercent.toFixed(1)}% ocupado` : 'Não disponível');
     setBar('disk-bar', diskPercent);
+    setFloatingResource('cpu', info.cpuUsage, `${Number(info.cpuUsage).toFixed(1)}%`);
+    setFloatingResource('ram', info.memoryUsagePercent, `${Number(info.memoryUsagePercent).toFixed(1)}%`);
+    setFloatingResource('disk', diskPercent, `${diskPercent.toFixed(1)}%`);
 
     setText('uptime', formatDuration(info.uptime));
     setText('overview-uptime', formatDuration(info.uptime));
-    renderSystemStatus(info.systemStatus);
     setText('primary-ip', info.primaryIp || 'Não informado');
     setText('project-file-count', info.project?.fileCount ?? 'Não informado');
     setText('project-file-note', info.project ? `${info.project.directoryCount} pasta(s) · node_modules excluído` : 'Sem dados');
@@ -476,6 +515,9 @@ async function loadHardwareSensors() {
       : validNumber(data.cpuTemperature?.max) ? data.cpuTemperature.max : null;
     const gpuTemp = validNumber(gpu?.temperature) ? gpu.temperature : null;
     const gpuUsage = validNumber(gpu?.utilization) ? gpu.utilization : null;
+    if (gpuUsage !== null) setFloatingResource('gpu', gpuUsage, `${gpuUsage.toFixed(1)}%`);
+    else if (gpuTemp !== null) setFloatingResource('gpu', gpuTemp, `${gpuTemp.toFixed(1)} °C`, { warning: 70, attention: 85 });
+    else setFloatingResource('gpu', null);
     const vramTotal = validNumber(gpu?.memoryTotal) && gpu.memoryTotal > 0 ? gpu.memoryTotal * 1024 * 1024
       : validNumber(gpu?.vram) && gpu.vram > 0 ? gpu.vram * 1024 * 1024 : 0;
     const vramUsed = validNumber(gpu?.memoryUsed) && gpu.memoryUsed >= 0 ? gpu.memoryUsed * 1024 * 1024 : null;
@@ -516,6 +558,7 @@ async function loadHardwareSensors() {
     }
     Object.values(sensorCharts).forEach((chart) => chart?.update('none'));
   } catch (error) {
+    setFloatingResource('gpu', null);
     setText('sensor-status', 'sensores indisponíveis');
     console.error(error);
   }

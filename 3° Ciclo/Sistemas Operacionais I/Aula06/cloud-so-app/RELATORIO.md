@@ -14,7 +14,7 @@ O trabalho demonstra a execução do mesmo serviço no computador local e em pla
 | Exibir host, plataforma, arquitetura e CPUs | Concluído | Painel e endpoint `/api/system` |
 | Exibir memória total e livre | Concluído | Painel e endpoint `/api/system` |
 | Exibir tempo de atividade do sistema | Concluído | Painel e campo `uptime` |
-| Exibir percentual de RAM, CPU médio, uptime formatado, arquivos, IP e status geral | Concluído | Cards da seção “Visão geral” e endpoint `/api/system` |
+| Exibir percentual de RAM, CPU médio, uptime formatado, arquivos, IP e status geral | Concluído | Cards da seção “Visão geral”, painel flutuante por recurso e endpoint `/api/system` |
 | Identificar execução local/cloud, provedor, porta e variáveis de ambiente seguras | Concluído | Seção “Ambiente de execução” e campo `deployment` |
 | Testar localmente no navegador | Concluído | `http://localhost:3000` |
 | Publicar o projeto no GitHub | Concluído | [Repositório Fatec-ADS](https://github.com/apsilvaadrian/Fatec-ADS) |
