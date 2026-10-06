@@ -71,6 +71,23 @@
           </div>
         </section>
 
+
+        <section class="gpu-thermal-section" id="gpu-thermal">
+          <div class="section-heading"><div><p class="eyebrow">SENSORES DE HARDWARE</p><h2>GPU & temperaturas</h2></div><div class="live-indicator"><span class="pulse-dot"></span><strong id="sensor-status">consultando sensores</strong><span>· atualização a cada 5s</span></div></div>
+          <div class="sensor-summary-grid">
+            <article class="sensor-card sensor-card-gpu"><div class="sensor-icon">◈</div><p class="metric-label">Placa de vídeo</p><h3 id="gpu-model">Detectando GPU…</h3><p class="sensor-subtitle" id="gpu-vendor">Fabricante: —</p><div class="sensor-specs"><div><span>VRAM total</span><strong id="gpu-vram">—</strong></div><div><span>Driver</span><strong id="gpu-driver">—</strong></div><div><span>Clock da GPU</span><strong id="gpu-clock">—</strong></div><div><span>Clock da memória</span><strong id="gpu-memory-clock">—</strong></div></div></article>
+            <article class="sensor-card"><div class="sensor-icon">♨</div><p class="metric-label">Temperatura do processador</p><strong class="sensor-reading" id="cpu-temp-current">—</strong><p class="sensor-subtitle" id="cpu-temp-note">Leitura do sensor</p><div class="temperature-track"><span id="cpu-temp-bar"></span></div><p class="sensor-footnote">Indicador visual; a leitura depende dos sensores e drivers disponíveis.</p></article>
+            <article class="sensor-card"><div class="sensor-icon">◉</div><p class="metric-label">Temperatura da GPU</p><strong class="sensor-reading" id="gpu-temp-current">—</strong><p class="sensor-subtitle" id="gpu-temp-note">Leitura do sensor</p><div class="temperature-track"><span id="gpu-temp-bar"></span></div><p class="sensor-footnote">Se não houver sensor compatível, será exibido “Não disponível”.</p></article>
+          </div>
+          <div class="sensor-charts-grid">
+            <article class="chart-card"><div class="chart-heading"><div><p class="eyebrow">GPU</p><h3>Uso da placa de vídeo</h3></div><strong class="chart-current" id="gpu-usage-current">—</strong></div><div class="chart-wrap"><canvas id="gpu-usage-chart"></canvas></div></article>
+            <article class="chart-card"><div class="chart-heading"><div><p class="eyebrow">CPU</p><h3>Temperatura do processador</h3></div><strong class="chart-current" id="cpu-temp-chart-current">—</strong></div><div class="chart-wrap"><canvas id="cpu-temp-chart"></canvas></div></article>
+            <article class="chart-card"><div class="chart-heading"><div><p class="eyebrow">GPU</p><h3>Temperatura da placa de vídeo</h3></div><strong class="chart-current" id="gpu-temp-chart-current">—</strong></div><div class="chart-wrap"><canvas id="gpu-temp-chart"></canvas></div></article>
+            <article class="chart-card"><div class="chart-heading"><div><p class="eyebrow">MEMÓRIA DE VÍDEO</p><h3>Uso da VRAM</h3></div><strong class="chart-current" id="vram-usage-current">—</strong></div><div class="chart-wrap"><canvas id="vram-usage-chart"></canvas></div></article>
+          </div>
+          <p class="sensor-disclaimer">Os sensores podem não ser expostos pelo sistema operacional, driver, máquina virtual ou hospedagem em nuvem. Nesses casos, os gráficos deixam a leitura em branco em vez de inventar valores.</p>
+        </section>
+
         <section class="details-grid">
           <article class="detail-panel" id="hardware">
             <div class="panel-heading"><div><p class="eyebrow">PROCESSADOR</p><h2>CPU detectada</h2></div><span class="panel-symbol">⚙</span></div>
