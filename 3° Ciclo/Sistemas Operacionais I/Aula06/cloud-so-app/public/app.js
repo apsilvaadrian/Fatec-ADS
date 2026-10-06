@@ -173,6 +173,7 @@ function renderProcesses() {
   const items = processState.items.filter((item) => !query || String(item.name).toLowerCase().includes(query) || String(item.pid).includes(query))
     .sort((a, b) => sort === 'memory' ? (b.memory || 0) - (a.memory || 0) : (b.cpu || 0) - (a.cpu || 0));
   setText('process-count', processState.items.length);
+  setText('nav-proc', processState.items.length);
   body.innerHTML = items.length ? items.map((item) => '<tr><td><strong>' + escapeHtml(item.name) + '</strong></td><td><code>' + item.pid + '</code></td><td><span class="usage-value">' + Number(item.cpu || 0).toFixed(1) + '%</span></td><td>' + formatProcessMemory(item.memory || 0) + '<small>' + (item.memoryPercent ? ' · ' + Number(item.memoryPercent).toFixed(1) + '%' : '') + '</small></td><td>' + escapeHtml(item.elapsed || '—') + '</td></tr>').join('') : '<tr><td colspan="5" class="empty-state">Nenhum processo encontrado.</td></tr>';
 }
 
