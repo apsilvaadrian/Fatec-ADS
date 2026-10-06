@@ -21,12 +21,13 @@ html[data-theme="dark"] .topbar{background:rgba(11,17,32,.88)}html[data-theme="d
 html[data-theme="dark"] .status-card.status-warning{--accent:#facc15}
 
 /* Janela flutuante de status por recurso */
-.resource-status-widget{position:fixed;right:22px;bottom:22px;z-index:40;width:276px;padding:16px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent,var(--primary));border-radius:14px;box-shadow:0 16px 38px rgba(15,23,42,.16)}
+.resource-status-widget{position:fixed;right:22px;bottom:22px;z-index:40;width:320px;padding:18px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent,var(--primary));border-radius:14px;box-shadow:0 16px 38px rgba(15,23,42,.16)}
 .resource-status-widget.status-ok{--accent:var(--green)}
 .resource-status-widget.status-warning{--accent:#ca8a04}
 .resource-status-widget.status-attention{--accent:var(--red)}
 .resource-status-widget.status-unavailable{--accent:var(--soft)}
-.resource-status-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.resource-status-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;cursor:grab;user-select:none;touch-action:none}
+.resource-status-widget.dragging .resource-status-heading{cursor:grabbing}
 .resource-status-heading .eyebrow{color:var(--accent);margin-bottom:5px}
 .resource-status-heading h3{margin:0;color:var(--accent);font-size:1.1rem}
 .resource-status-symbol{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-weight:800;font-size:1.1rem}
@@ -43,6 +44,13 @@ html[data-theme="dark"] .status-card.status-warning{--accent:#facc15}
 html[data-theme="dark"] .resource-status-widget.status-warning{--accent:#facc15}
 html[data-theme="dark"] .resource-status-row.status-warning{--row-color:#facc15}
 @media(max-width:760px){.resource-status-widget{right:14px;bottom:14px;width:calc(100% - 28px)}}
+
+/* Ícones monocromáticos e padronizados da navegação */
+.nav-symbol{display:inline-grid;place-items:center;flex:0 0 18px;width:18px;height:18px;color:inherit;font-size:1rem;line-height:1;font-family:"Segoe UI Symbol",Inter,sans-serif}
+.nav-icon-cpu::before{content:'▣'}
+.nav-icon-ram::before{content:'▦'}
+.nav-icon-network{font-size:.84rem;color:inherit}
+.metric-note-model{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* Espaçamento e navegação v3 */
 .details-grid{gap:24px;margin-top:26px}

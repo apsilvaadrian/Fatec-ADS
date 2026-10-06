@@ -138,6 +138,60 @@ function setFloatingResource(key, value, displayValue, thresholds) {
   refreshFloatingStatus();
 }
 
+function enableFloatingStatusDrag() {
+  const widget = $('resource-status-widget');
+  const handle = widget?.querySelector('[data-drag-handle]');
+  if (!widget || !handle) return;
+
+  const storageKey = 'cloud-so-status-widget-position';
+  const clamp = (value, min, max) => Math.min(Math.max(value, min), Math.max(min, max));
+  const applyPosition = (left, top) => {
+    const maxLeft = window.innerWidth - widget.offsetWidth - 8;
+    const maxTop = window.innerHeight - widget.offsetHeight - 8;
+    widget.style.left = `${clamp(left, 8, maxLeft)}px`;
+    widget.style.top = `${clamp(top, 8, maxTop)}px`;
+    widget.style.right = 'auto';
+    widget.style.bottom = 'auto';
+  };
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+    if (Number.isFinite(saved?.left) && Number.isFinite(saved?.top)) applyPosition(saved.left, saved.top);
+  } catch {}
+
+  let dragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+  handle.addEventListener('pointerdown', (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+    const rect = widget.getBoundingClientRect();
+    dragging = true;
+    offsetX = event.clientX - rect.left;
+    offsetY = event.clientY - rect.top;
+    widget.classList.add('dragging');
+    handle.setPointerCapture?.(event.pointerId);
+  });
+  handle.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    applyPosition(event.clientX - offsetX, event.clientY - offsetY);
+  });
+  const stopDragging = (event) => {
+    if (!dragging) return;
+    dragging = false;
+    widget.classList.remove('dragging');
+    handle.releasePointerCapture?.(event.pointerId);
+    const rect = widget.getBoundingClientRect();
+    try { localStorage.setItem(storageKey, JSON.stringify({ left: rect.left, top: rect.top })); } catch {}
+  };
+  handle.addEventListener('pointerup', stopDragging);
+  handle.addEventListener('pointercancel', stopDragging);
+  window.addEventListener('resize', () => {
+    if (widget.style.left && widget.style.top) applyPosition(widget.offsetLeft, widget.offsetTop);
+  });
+}
+
+enableFloatingStatusDrag();
+
 async function loadSystemInfo() {
   try {
     const response = await fetch('/api/system', { cache: 'no-store' });
